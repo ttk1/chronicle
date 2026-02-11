@@ -1,0 +1,59 @@
+.tasks-view {
+  padding: 8px 0;
+}
+
+.tasks-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 0 16px;
+}
+
+.tasks-progress-bar {
+  flex: 1;
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.tasks-progress-fill {
+  height: 100%;
+  background: #4a7dff;
+  border-radius: 4px;
+  transition: width 0.2s;
+}
+
+.tasks-progress-text {
+  font-size: 0.8rem;
+  color: #666;
+  white-space: nowrap;
+}
+
+.tasks-list {
+  list-style: none;
+  padding: 0;
+}
+
+.tasks-item {
+  padding: 4px 0;
+}
+
+.tasks-item.checked .tasks-text {
+  text-decoration: line-through;
+  color: #999;
+}
+
+.tasks-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.tasks-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}

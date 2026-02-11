@@ -1,0 +1,123 @@
+import { useState } from "react";
+import type { TreeNode } from "../api";
+import "./TreeView.css";
+
+const TYPE_ICONS: Record<string, string> = {
+  note: "\u{1F4DD}",
+  daily: "\u{1F4C5}",
+  tasks: "\u{2705}",
+  kanban: "\u{1F4CB}",
+};
+
+interface TreeItemProps {
+  node: TreeNode;
+  currentPath: string | null;
+  onSelect: (path: string) => void;
+  onCreatePage: (parentPath: string) => void;
+  depth: number;
+}
+
+function TreeItem({
+  node,
+  currentPath,
+  onSelect,
+  onCreatePage,
+  depth,
+}: TreeItemProps) {
+  const [expanded, setExpanded] = useState(depth < 1);
+  const hasChildren = node.children.length > 0;
+  const isDir = hasChildren || (node.path && node.path.endsWith("_index.md"));
+  const icon = node.type ? TYPE_ICONS[node.type] || "\u{1F4C4}" : "\u{1F4C1}";
+  const isActive = node.path === currentPath;
+
+  const handleClick = () => {
+    if (node.path) {
+      onSelect(node.path);
+    }
+    if (isDir) {
+      setExpanded((prev) => !prev);
+    }
+  };
+
+  // Derive the directory path for creating child pages
+  const dirPath = node.path
+    ? node.path.endsWith("_index.md")
+      ? node.path.replace(/_index\.md$/, "")
+      : node.path.replace(/[^/]*$/, "")
+    : node.name + "/";
+
+  return (
+    <div className="tree-item">
+      <div className="tree-item-row">
+        <button
+          className={`tree-item-label ${isActive ? "active" : ""}`}
+          style={{ paddingLeft: `${12 + depth * 16}px` }}
+          onClick={handleClick}
+        >
+          {isDir && (
+            <span className={`tree-chevron ${expanded ? "expanded" : ""}`}>
+              {"\u25B6"}
+            </span>
+          )}
+          <span className="tree-icon">{icon}</span>
+          <span className="tree-title">{node.title || node.name}</span>
+        </button>
+        {isDir && (
+          <button
+            className="tree-add-btn"
+            title={`New page in ${node.title || node.name}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onCreatePage(dirPath);
+            }}
+          >
+            +
+          </button>
+        )}
+      </div>
+      {expanded && hasChildren && (
+        <div className="tree-children">
+          {node.children.map((child) => (
+            <TreeItem
+              key={child.path || child.name}
+              node={child}
+              currentPath={currentPath}
+              onSelect={onSelect}
+              onCreatePage={onCreatePage}
+              depth={depth + 1}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface TreeViewProps {
+  tree: TreeNode[];
+  currentPath: string | null;
+  onSelect: (path: string) => void;
+  onCreatePage: (parentPath: string) => void;
+}
+
+export default function TreeView({
+  tree,
+  currentPath,
+  onSelect,
+  onCreatePage,
+}: TreeViewProps) {
+  return (
+    <div className="tree-view">
+      {tree.map((node) => (
+        <TreeItem
+          key={node.path || node.name}
+          node={node}
+          currentPath={currentPath}
+          onSelect={onSelect}
+          onCreatePage={onCreatePage}
+          depth={0}
+        />
+      ))}
+    </div>
+  );
+}

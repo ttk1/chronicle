@@ -1,0 +1,92 @@
+.tree-view {
+  display: flex;
+  flex-direction: column;
+}
+
+.tree-item-row {
+  display: flex;
+  align-items: center;
+}
+
+.tree-item-row:hover .tree-add-btn {
+  opacity: 1;
+}
+
+.tree-add-btn {
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #888;
+  opacity: 0;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  margin-right: 4px;
+}
+
+.tree-add-btn:hover {
+  background: #ddd;
+  color: #555;
+}
+
+.tree-item-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 5px 12px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.84rem;
+  text-align: left;
+  border-radius: 4px;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tree-item-label:hover {
+  background: #e0e0e0;
+}
+
+.tree-item-label.active {
+  background: #d0d8e8;
+  font-weight: 500;
+}
+
+.tree-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  font-size: 0.55rem;
+  transition: transform 0.15s;
+  flex-shrink: 0;
+  color: #888;
+}
+
+.tree-chevron.expanded {
+  transform: rotate(90deg);
+}
+
+.tree-icon {
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.tree-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tree-children {
+  display: flex;
+  flex-direction: column;
+}
