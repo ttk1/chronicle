@@ -26,6 +26,7 @@ export default function AutocompletePopup({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
 
   const fuse = useRef(
     new Fuse(items, {
@@ -54,6 +55,17 @@ export default function AutocompletePopup({
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
+
+  // Close on click outside
+  useEffect(() => {
+    const handleMouseDown = (e: MouseEvent) => {
+      if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [onClose]);
 
   // Scroll selected item into view
   useEffect(() => {
@@ -86,6 +98,7 @@ export default function AutocompletePopup({
 
   return (
     <div
+      ref={popupRef}
       className="autocomplete-popup"
       style={{ top: position.top, left: position.left }}
     >

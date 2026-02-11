@@ -200,16 +200,23 @@ function App() {
   const handleAutocompleteSelect = useCallback(
     (item: AutocompleteItem) => {
       if (!currentPath) return;
-      const insertFn = (window as unknown as Record<string, unknown>)
-        .__chronicle_insertText as ((text: string) => void) | undefined;
-      if (!insertFn) return;
-
+      const win = window as unknown as Record<string, unknown>;
       const relPath = computeRelativePath(currentPath, item.path);
 
       if (autocomplete?.mode === "image") {
-        insertFn(`](${relPath})`);
+        const insertImageFn = win.__chronicle_insertImage as
+          | ((deleteCount: number, alt: string, src: string) => void)
+          | undefined;
+        if (!insertImageFn) return;
+        // Delete "![" (2 chars) and insert image node
+        insertImageFn(2, item.title, relPath);
       } else {
-        insertFn(`${item.title}](${relPath})`);
+        const insertLinkFn = win.__chronicle_insertLink as
+          | ((deleteCount: number, title: string, href: string) => void)
+          | undefined;
+        if (!insertLinkFn) return;
+        // Delete "[" (1 char) and insert link node
+        insertLinkFn(1, item.title, relPath);
       }
       setAutocomplete(null);
     },
@@ -303,6 +310,17 @@ function App() {
             onChange={handleChange}
             onTriggerLinkAutocomplete={handleTriggerLinkAutocomplete}
             onTriggerImageAutocomplete={handleTriggerImageAutocomplete}
+            onLinkClick={(href) => {
+              if (!currentPath || !href) return;
+              // Resolve relative href against current note's directory
+              const dir = currentPath.split("/").slice(0, -1);
+              for (const seg of href.split("/")) {
+                if (seg === "..") dir.pop();
+                else if (seg !== "." && seg !== "") dir.push(seg);
+              }
+              const resolved = dir.join("/");
+              openNote(resolved);
+            }}
           />
         </div>
       </>

@@ -16,6 +16,7 @@ interface EditorProps {
   onChange?: (markdown: string) => void;
   onTriggerLinkAutocomplete?: (pos: { top: number; left: number }) => void;
   onTriggerImageAutocomplete?: (pos: { top: number; left: number }) => void;
+  onLinkClick?: (href: string) => void;
 }
 
 const MilkdownEditorInner: React.FC<EditorProps> = ({
@@ -24,6 +25,7 @@ const MilkdownEditorInner: React.FC<EditorProps> = ({
   onChange,
   onTriggerLinkAutocomplete,
   onTriggerImageAutocomplete,
+  onLinkClick,
 }) => {
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
@@ -33,6 +35,8 @@ const MilkdownEditorInner: React.FC<EditorProps> = ({
   triggerImageRef.current = onTriggerImageAutocomplete;
   const currentPathRef = useRef(currentPath);
   currentPathRef.current = currentPath;
+  const onLinkClickRef = useRef(onLinkClick);
+  onLinkClickRef.current = onLinkClick;
 
   const { get } = useEditor((root) => {
     return Editor.make()
@@ -52,32 +56,53 @@ const MilkdownEditorInner: React.FC<EditorProps> = ({
       .use(history);
   }, [defaultValue]);
 
-  // Insert text at current cursor position
-  const insertText = useCallback(
-    (text: string) => {
+  // Insert a link node (ProseMirror mark) replacing N chars before cursor
+  const insertLink = useCallback(
+    (deleteCount: number, title: string, href: string) => {
       const editor = get();
       if (!editor) return;
       editor.action((ctx) => {
         const view = ctx.get(editorViewCtx);
         const { state } = view;
         const { from } = state.selection;
-        const tr = state.tr.insertText(text, from);
+        const start = Math.max(0, from - deleteCount);
+        const linkMark = state.schema.marks.link.create({ href });
+        const textNode = state.schema.text(title, [linkMark]);
+        const tr = state.tr.replaceWith(start, from, textNode);
         view.dispatch(tr);
       });
     },
     [get]
   );
 
-  // Expose insertText on the window for autocomplete callbacks
+  // Insert an image node replacing N chars before cursor
+  const insertImage = useCallback(
+    (deleteCount: number, alt: string, src: string) => {
+      const editor = get();
+      if (!editor) return;
+      editor.action((ctx) => {
+        const view = ctx.get(editorViewCtx);
+        const { state } = view;
+        const { from } = state.selection;
+        const start = Math.max(0, from - deleteCount);
+        const imageNode = state.schema.nodes.image.create({ src, alt });
+        const tr = state.tr.replaceWith(start, from, imageNode);
+        view.dispatch(tr);
+      });
+    },
+    [get]
+  );
+
+  // Expose editor helpers on the window for autocomplete callbacks
   useEffect(() => {
     const win = window as unknown as Record<string, unknown>;
-    win.__chronicle_insertText = insertText;
-    win.__chronicle_currentPath = currentPath;
+    win.__chronicle_insertLink = insertLink;
+    win.__chronicle_insertImage = insertImage;
     return () => {
-      delete win.__chronicle_insertText;
-      delete win.__chronicle_currentPath;
+      delete win.__chronicle_insertLink;
+      delete win.__chronicle_insertImage;
     };
-  }, [insertText, currentPath]);
+  }, [insertLink, insertImage]);
 
   // Handle clipboard paste for images
   useEffect(() => {
@@ -97,7 +122,7 @@ const MilkdownEditorInner: React.FC<EditorProps> = ({
               currentPathRef.current,
               result.path
             );
-            insertText(`![](${relPath})`);
+            insertImage(0, "", relPath);
           } catch (err) {
             console.error("Failed to upload image:", err);
           }
@@ -108,11 +133,28 @@ const MilkdownEditorInner: React.FC<EditorProps> = ({
 
     document.addEventListener("paste", handlePaste);
     return () => document.removeEventListener("paste", handlePaste);
-  }, [insertText]);
+  }, [insertImage]);
 
-  // Handle keydown for autocomplete triggers
+  // Handle Ctrl+Click on links to navigate
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleClick = (e: MouseEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      const target = e.target as HTMLElement;
+      const anchor = target.closest("a");
+      if (!anchor) return;
+      const href = anchor.getAttribute("href");
+      if (!href) return;
+      e.preventDefault();
+      onLinkClickRef.current?.(href);
+    };
+
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, []);
+
+  // Handle keyup for autocomplete triggers (after [ is inserted into editor)
+  useEffect(() => {
+    const handleKeyUp = (e: KeyboardEvent) => {
       if (e.key !== "[") return;
 
       const editor = get();
@@ -125,14 +167,14 @@ const MilkdownEditorInner: React.FC<EditorProps> = ({
       const rect = range.getBoundingClientRect();
       const pos = { top: rect.bottom + 4, left: rect.left };
 
-      // Check preceding character to detect ![
+      // Check characters before cursor to detect ![ (now [ is already in doc)
       editor.action((ctx) => {
         const view = ctx.get(editorViewCtx);
         const { state } = view;
         const { from } = state.selection;
-        const before = state.doc.textBetween(Math.max(0, from - 1), from);
+        const textBefore = state.doc.textBetween(Math.max(0, from - 2), from);
 
-        if (before === "!") {
+        if (textBefore === "![") {
           triggerImageRef.current?.(pos);
         } else {
           triggerLinkRef.current?.(pos);
@@ -140,8 +182,8 @@ const MilkdownEditorInner: React.FC<EditorProps> = ({
       });
     };
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener("keyup", handleKeyUp);
+    return () => document.removeEventListener("keyup", handleKeyUp);
   }, [get]);
 
   return <Milkdown />;
