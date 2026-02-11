@@ -139,6 +139,17 @@
   padding: 16px 24px;
 }
 
+/* WYSIWYG link styling */
+.editor-wrapper a {
+  color: #4a7dff;
+  text-decoration: none;
+  cursor: text;
+}
+
+.editor-wrapper a:hover {
+  text-decoration: underline;
+}
+
 .placeholder {
   flex: 1;
   display: flex;
@@ -155,4 +166,60 @@
   height: 100%;
   color: #999;
   font-size: 1.1rem;
+}
+
+/* Editor mode selector */
+.editor-mode-selector {
+  display: flex;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.mode-btn {
+  padding: 4px 10px;
+  background: #fff;
+  border: none;
+  border-right: 1px solid #ddd;
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: #666;
+  transition: background 0.15s, color 0.15s;
+}
+
+.mode-btn:last-child {
+  border-right: none;
+}
+
+.mode-btn:hover {
+  background: #f0f0f0;
+}
+
+.mode-btn.active {
+  background: #4a7dff;
+  color: #fff;
+}
+
+/* Split layout */
+.editor-wrapper.split-layout {
+  display: flex;
+  flex-direction: row;
+  padding: 0;
+}
+
+.split-source {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.split-divider {
+  width: 1px;
+  background: #ddd;
+  flex-shrink: 0;
+}
+
+.split-preview {
+  flex: 1;
+  overflow-y: auto;
 }

@@ -8,6 +8,8 @@ import GitCommitDialog from "./components/GitCommitDialog";
 import GitHistoryPanel from "./components/GitHistoryPanel";
 import CalendarView from "./components/CalendarView";
 import KanbanView from "./components/KanbanView";
+import MarkdownSourceEditor from "./components/MarkdownSourceEditor";
+import MarkdownPreview from "./components/MarkdownPreview";
 import AutocompletePopup, {
   type AutocompleteItem,
 } from "./components/AutocompletePopup";
@@ -72,6 +74,9 @@ function App() {
   const [calendarMode, setCalendarMode] = useState(false);
   const [commitDialogOpen, setCommitDialogOpen] = useState(false);
   const [frontmatterRaw, setFrontmatterRaw] = useState<string>("");
+  type EditorMode = "wysiwyg" | "source" | "split";
+  const [editorMode, setEditorMode] = useState<EditorMode>("wysiwyg");
+  const [liveContent, setLiveContent] = useState<string>("");
 
   const refreshTree = useCallback(async () => {
     const data = await getTree();
@@ -111,12 +116,26 @@ function App() {
     const { raw, body, meta } = splitFrontmatter(note.content);
     setFrontmatterRaw(raw);
     setContent(body);
+    setLiveContent(body);
     setCurrentPath(path);
     setNoteType(typeof meta.type === "string" ? meta.type : "note");
+    setEditorMode("wysiwyg");
   }, []);
 
   const handleChange = useCallback((markdown: string) => {
     contentRef.current = markdown;
+  }, []);
+
+  const handleSourceChange = useCallback((markdown: string) => {
+    contentRef.current = markdown;
+    setLiveContent(markdown);
+  }, []);
+
+  const handleEditorModeChange = useCallback((newMode: EditorMode) => {
+    const latest = contentRef.current;
+    setContent(latest);
+    setLiveContent(latest);
+    setEditorMode(newMode);
   }, []);
 
   const handleSave = useCallback(async () => {
@@ -203,24 +222,36 @@ function App() {
       const win = window as unknown as Record<string, unknown>;
       const relPath = computeRelativePath(currentPath, item.path);
 
-      if (autocomplete?.mode === "image") {
-        const insertImageFn = win.__chronicle_insertImage as
-          | ((deleteCount: number, alt: string, src: string) => void)
-          | undefined;
-        if (!insertImageFn) return;
-        // Delete "![" (2 chars) and insert image node
-        insertImageFn(2, item.title, relPath);
+      if (editorMode === "wysiwyg") {
+        // ProseMirror node insertion
+        if (autocomplete?.mode === "image") {
+          const insertImageFn = win.__chronicle_insertImage as
+            | ((deleteCount: number, alt: string, src: string) => void)
+            | undefined;
+          if (!insertImageFn) return;
+          insertImageFn(2, item.title, relPath);
+        } else {
+          const insertLinkFn = win.__chronicle_insertLink as
+            | ((deleteCount: number, title: string, href: string) => void)
+            | undefined;
+          if (!insertLinkFn) return;
+          insertLinkFn(1, item.title, relPath);
+        }
       } else {
-        const insertLinkFn = win.__chronicle_insertLink as
-          | ((deleteCount: number, title: string, href: string) => void)
+        // Textarea plain text insertion
+        const insertFn = win.__chronicle_source_insertAtCursor as
+          | ((deleteCount: number, text: string) => void)
           | undefined;
-        if (!insertLinkFn) return;
-        // Delete "[" (1 char) and insert link node
-        insertLinkFn(1, item.title, relPath);
+        if (!insertFn) return;
+        if (autocomplete?.mode === "image") {
+          insertFn(2, `![${item.title}](${relPath})`);
+        } else {
+          insertFn(1, `[${item.title}](${relPath})`);
+        }
       }
       setAutocomplete(null);
     },
-    [currentPath, autocomplete]
+    [currentPath, autocomplete, editorMode]
   );
 
   if (loading) {
@@ -297,31 +328,84 @@ function App() {
             {noteType !== "note" && (
               <span className={`type-badge ${noteType}`}>{noteType}</span>
             )}
+            <div className="editor-mode-selector">
+              <button
+                className={`mode-btn${editorMode === "wysiwyg" ? " active" : ""}`}
+                onClick={() => handleEditorModeChange("wysiwyg")}
+              >
+                WYSIWYG
+              </button>
+              <button
+                className={`mode-btn${editorMode === "source" ? " active" : ""}`}
+                onClick={() => handleEditorModeChange("source")}
+              >
+                Source
+              </button>
+              <button
+                className={`mode-btn${editorMode === "split" ? " active" : ""}`}
+                onClick={() => handleEditorModeChange("split")}
+              >
+                Split
+              </button>
+            </div>
             <button className="save-btn" onClick={handleSave}>
               Save
             </button>
           </div>
         </div>
-        <div className="editor-wrapper">
-          <MilkdownEditor
-            key={currentPath}
-            defaultValue={content}
-            currentPath={currentPath}
-            onChange={handleChange}
-            onTriggerLinkAutocomplete={handleTriggerLinkAutocomplete}
-            onTriggerImageAutocomplete={handleTriggerImageAutocomplete}
-            onLinkClick={(href) => {
-              if (!currentPath || !href) return;
-              // Resolve relative href against current note's directory
-              const dir = currentPath.split("/").slice(0, -1);
-              for (const seg of href.split("/")) {
-                if (seg === "..") dir.pop();
-                else if (seg !== "." && seg !== "") dir.push(seg);
-              }
-              const resolved = dir.join("/");
-              openNote(resolved);
-            }}
-          />
+        <div className={`editor-wrapper${editorMode === "split" ? " split-layout" : ""}`}>
+          {editorMode === "wysiwyg" && (
+            <MilkdownEditor
+              key={currentPath + ":wysiwyg"}
+              defaultValue={content}
+              currentPath={currentPath}
+              onChange={handleChange}
+              onTriggerLinkAutocomplete={handleTriggerLinkAutocomplete}
+              onTriggerImageAutocomplete={handleTriggerImageAutocomplete}
+              onLinkClick={(href) => {
+                if (!currentPath || !href) return;
+                const dir = currentPath.split("/").slice(0, -1);
+                for (const seg of href.split("/")) {
+                  if (seg === "..") dir.pop();
+                  else if (seg !== "." && seg !== "") dir.push(seg);
+                }
+                const resolved = dir.join("/");
+                openNote(resolved);
+              }}
+            />
+          )}
+          {editorMode === "source" && (
+            <MarkdownSourceEditor
+              key={currentPath + ":source"}
+              defaultValue={content}
+              currentPath={currentPath}
+              onChange={handleChange}
+              onTriggerLinkAutocomplete={handleTriggerLinkAutocomplete}
+              onTriggerImageAutocomplete={handleTriggerImageAutocomplete}
+            />
+          )}
+          {editorMode === "split" && (
+            <>
+              <div className="split-source">
+                <MarkdownSourceEditor
+                  key={currentPath + ":split-source"}
+                  defaultValue={content}
+                  currentPath={currentPath}
+                  onChange={handleSourceChange}
+                  onTriggerLinkAutocomplete={handleTriggerLinkAutocomplete}
+                  onTriggerImageAutocomplete={handleTriggerImageAutocomplete}
+                />
+              </div>
+              <div className="split-divider" />
+              <div className="split-preview">
+                <MarkdownPreview
+                  content={liveContent}
+                  currentPath={currentPath}
+                  onOpenNote={openNote}
+                />
+              </div>
+            </>
+          )}
         </div>
       </>
     );

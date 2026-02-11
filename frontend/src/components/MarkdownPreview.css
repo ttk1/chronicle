@@ -1,0 +1,100 @@
+.markdown-preview {
+  padding: 16px 24px;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #333;
+  overflow-y: auto;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.markdown-preview h1 {
+  font-size: 1.6rem;
+  margin: 1em 0 0.5em;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.3em;
+}
+
+.markdown-preview h2 {
+  font-size: 1.3rem;
+  margin: 1em 0 0.4em;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.2em;
+}
+
+.markdown-preview h3 {
+  font-size: 1.1rem;
+  margin: 0.8em 0 0.3em;
+}
+
+.markdown-preview code {
+  background: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+  font-size: 0.85em;
+}
+
+.markdown-preview pre {
+  background: #f5f5f5;
+  padding: 12px 16px;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+.markdown-preview pre code {
+  background: none;
+  padding: 0;
+}
+
+.markdown-preview table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+}
+
+.markdown-preview th,
+.markdown-preview td {
+  border: 1px solid #ddd;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.markdown-preview th {
+  background: #f5f5f5;
+  font-weight: 600;
+}
+
+.markdown-preview ul.contains-task-list {
+  list-style: none;
+  padding-left: 8px;
+}
+
+.markdown-preview input[type="checkbox"] {
+  margin-right: 6px;
+}
+
+.markdown-preview a {
+  color: #4a7dff;
+  text-decoration: none;
+}
+
+.markdown-preview a:hover {
+  text-decoration: underline;
+}
+
+.markdown-preview blockquote {
+  border-left: 3px solid #ddd;
+  margin: 0.8em 0;
+  padding: 0.4em 1em;
+  color: #666;
+}
+
+.markdown-preview img {
+  max-width: 100%;
+  border-radius: 4px;
+}
+
+.markdown-preview del {
+  color: #999;
+}
