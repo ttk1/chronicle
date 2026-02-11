@@ -8,12 +8,12 @@
   font-size: 0.9rem;
   line-height: 1.6;
   padding: 16px 24px;
-  background: #fafafa;
-  color: #333;
+  background: var(--color-bg-body);
+  color: var(--color-text-secondary);
   tab-size: 2;
   box-sizing: border-box;
 }
 
 .markdown-source-editor:focus {
-  background: #fff;
+  background: var(--color-bg-surface);
 }

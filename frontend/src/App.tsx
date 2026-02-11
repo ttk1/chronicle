@@ -78,6 +78,24 @@ function App() {
   const [editorMode, setEditorMode] = useState<EditorMode>("wysiwyg");
   const [liveContent, setLiveContent] = useState<string>("");
 
+  // Theme
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    const saved = localStorage.getItem("chronicle-theme");
+    if (saved === "light" || saved === "dark") return saved;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("chronicle-theme", theme);
+  }, [theme]);
+
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  }, []);
+
   const refreshTree = useCallback(async () => {
     const data = await getTree();
     setTree(data.children);
@@ -417,6 +435,13 @@ function App() {
         <div className="sidebar-header">
           <h1 className="sidebar-title">Chronicle</h1>
           <div style={{ display: "flex", gap: "4px" }}>
+            <button
+              className="sidebar-add-btn"
+              title={theme === "light" ? "Dark mode" : "Light mode"}
+              onClick={toggleTheme}
+            >
+              {theme === "light" ? "\u{1F319}" : "\u{2600}\u{FE0F}"}
+            </button>
             <button
               className={`sidebar-add-btn${searchMode ? " active" : ""}`}
               title="Search (Ctrl+Shift+F)"

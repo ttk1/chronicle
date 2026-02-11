@@ -41,7 +41,7 @@ export default function GitCommitDialog({
         </p>
         {status === "success" ? (
           <>
-            <p style={{ color: "#2e7d32", fontSize: "0.85rem" }}>
+            <p style={{ color: "var(--color-success-text)", fontSize: "0.85rem" }}>
               Committed: {result}
             </p>
             <div className="dialog-actions">
@@ -52,7 +52,7 @@ export default function GitCommitDialog({
           </>
         ) : status === "error" ? (
           <>
-            <p style={{ color: "#d32f2f", fontSize: "0.85rem" }}>{result}</p>
+            <p style={{ color: "var(--color-error-text)", fontSize: "0.85rem" }}>{result}</p>
             <div className="dialog-actions">
               <button className="dialog-btn cancel" onClick={onClose}>
                 Close

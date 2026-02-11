@@ -6,8 +6,8 @@
 /* Sidebar */
 .sidebar {
   width: 260px;
-  background: #f0f0f0;
-  border-right: 1px solid #ddd;
+  background: var(--color-bg-sidebar);
+  border-right: 1px solid var(--color-border-primary);
   display: flex;
   flex-direction: column;
 }
@@ -17,7 +17,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--color-border-primary);
 }
 
 .sidebar-title {
@@ -29,23 +29,23 @@
   width: 28px;
   height: 28px;
   border: none;
-  background: #ddd;
+  background: var(--color-border-primary);
   border-radius: 4px;
   font-size: 1.2rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #555;
+  color: var(--color-text-tertiary);
 }
 
 .sidebar-add-btn:hover {
-  background: #ccc;
+  background: var(--color-border-secondary);
 }
 
 .sidebar-add-btn.active {
-  background: #4a7dff;
-  color: #fff;
+  background: var(--color-accent);
+  color: var(--color-accent-text);
 }
 
 .sidebar-nav {
@@ -67,13 +67,13 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 16px;
-  border-bottom: 1px solid #ddd;
-  background: #fff;
+  border-bottom: 1px solid var(--color-border-primary);
+  background: var(--color-bg-surface);
 }
 
 .editor-path {
   font-size: 0.8rem;
-  color: #666;
+  color: var(--color-text-muted);
 }
 
 .toolbar-actions {
@@ -84,16 +84,16 @@
 
 .toolbar-btn {
   padding: 4px 12px;
-  background: #e8e8e8;
+  background: var(--color-bg-button);
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.8rem;
-  color: #555;
+  color: var(--color-text-tertiary);
 }
 
 .toolbar-btn:hover {
-  background: #ddd;
+  background: var(--color-border-primary);
 }
 
 .type-badge {
@@ -105,24 +105,24 @@
 }
 
 .type-badge.tasks {
-  background: #e8f5e9;
-  color: #2e7d32;
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
 }
 
 .type-badge.daily {
-  background: #e3f2fd;
-  color: #1565c0;
+  background: var(--color-info-bg);
+  color: var(--color-info-text);
 }
 
 .type-badge.kanban {
-  background: #fff3e0;
-  color: #e65100;
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
 }
 
 .save-btn {
   padding: 6px 16px;
-  background: #4a7dff;
-  color: #fff;
+  background: var(--color-accent);
+  color: var(--color-accent-text);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -130,7 +130,7 @@
 }
 
 .save-btn:hover {
-  background: #3a6de8;
+  background: var(--color-accent-hover);
 }
 
 .editor-wrapper {
@@ -141,7 +141,7 @@
 
 /* WYSIWYG link styling */
 .editor-wrapper a {
-  color: #4a7dff;
+  color: var(--color-accent);
   text-decoration: none;
   cursor: text;
 }
@@ -155,7 +155,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #999;
+  color: var(--color-text-placeholder);
   font-size: 1.1rem;
 }
 
@@ -164,26 +164,26 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #999;
+  color: var(--color-text-placeholder);
   font-size: 1.1rem;
 }
 
 /* Editor mode selector */
 .editor-mode-selector {
   display: flex;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border-primary);
   border-radius: 4px;
   overflow: hidden;
 }
 
 .mode-btn {
   padding: 4px 10px;
-  background: #fff;
+  background: var(--color-bg-surface);
   border: none;
-  border-right: 1px solid #ddd;
+  border-right: 1px solid var(--color-border-primary);
   cursor: pointer;
   font-size: 0.75rem;
-  color: #666;
+  color: var(--color-text-muted);
   transition: background 0.15s, color 0.15s;
 }
 
@@ -192,12 +192,12 @@
 }
 
 .mode-btn:hover {
-  background: #f0f0f0;
+  background: var(--color-bg-sidebar);
 }
 
 .mode-btn.active {
-  background: #4a7dff;
-  color: #fff;
+  background: var(--color-accent);
+  color: var(--color-accent-text);
 }
 
 /* Split layout */
@@ -215,7 +215,7 @@
 
 .split-divider {
   width: 1px;
-  background: #ddd;
+  background: var(--color-border-primary);
   flex-shrink: 0;
 }
 

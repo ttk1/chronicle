@@ -2,7 +2,7 @@
   padding: 16px 24px;
   font-size: 0.95rem;
   line-height: 1.7;
-  color: #333;
+  color: var(--color-text-secondary);
   overflow-y: auto;
   height: 100%;
   box-sizing: border-box;
@@ -11,14 +11,14 @@
 .markdown-preview h1 {
   font-size: 1.6rem;
   margin: 1em 0 0.5em;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--color-border-light);
   padding-bottom: 0.3em;
 }
 
 .markdown-preview h2 {
   font-size: 1.3rem;
   margin: 1em 0 0.4em;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--color-border-light);
   padding-bottom: 0.2em;
 }
 
@@ -28,7 +28,7 @@
 }
 
 .markdown-preview code {
-  background: #f0f0f0;
+  background: var(--color-bg-sidebar);
   padding: 2px 6px;
   border-radius: 3px;
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
@@ -36,7 +36,7 @@
 }
 
 .markdown-preview pre {
-  background: #f5f5f5;
+  background: var(--color-bg-elevated);
   padding: 12px 16px;
   border-radius: 6px;
   overflow-x: auto;
@@ -55,13 +55,13 @@
 
 .markdown-preview th,
 .markdown-preview td {
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border-primary);
   padding: 8px 12px;
   text-align: left;
 }
 
 .markdown-preview th {
-  background: #f5f5f5;
+  background: var(--color-bg-elevated);
   font-weight: 600;
 }
 
@@ -75,7 +75,7 @@
 }
 
 .markdown-preview a {
-  color: #4a7dff;
+  color: var(--color-accent);
   text-decoration: none;
 }
 
@@ -84,10 +84,10 @@
 }
 
 .markdown-preview blockquote {
-  border-left: 3px solid #ddd;
+  border-left: 3px solid var(--color-border-primary);
   margin: 0.8em 0;
   padding: 0.4em 1em;
-  color: #666;
+  color: var(--color-text-muted);
 }
 
 .markdown-preview img {
@@ -96,5 +96,5 @@
 }
 
 .markdown-preview del {
-  color: #999;
+  color: var(--color-text-placeholder);
 }

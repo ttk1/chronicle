@@ -10,7 +10,7 @@
   flex: 1;
   min-width: 200px;
   max-width: 350px;
-  background: #f5f5f5;
+  background: var(--color-bg-elevated);
   border-radius: 6px;
   display: flex;
   flex-direction: column;
@@ -21,8 +21,8 @@
   padding: 10px 12px;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #333;
-  border-bottom: 2px solid #ddd;
+  color: var(--color-text-secondary);
+  border-bottom: 2px solid var(--color-border-primary);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -30,8 +30,8 @@
 
 .kanban-column-count {
   font-size: 0.7rem;
-  color: #888;
-  background: #e8e8e8;
+  color: var(--color-text-faint);
+  background: var(--color-bg-button);
   padding: 1px 6px;
   border-radius: 8px;
 }
@@ -47,8 +47,8 @@
 }
 
 .kanban-card {
-  background: #fff;
-  border: 1px solid #e0e0e0;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-subtle);
   border-radius: 4px;
   padding: 8px 10px;
   font-size: 0.82rem;
@@ -60,7 +60,7 @@
 }
 
 .kanban-card:hover {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px var(--color-shadow);
 }
 
 .kanban-card.dragging {
@@ -69,7 +69,7 @@
 
 .kanban-card.checked .kanban-card-text {
   text-decoration: line-through;
-  color: #999;
+  color: var(--color-text-placeholder);
 }
 
 .kanban-card input[type="checkbox"] {
@@ -91,6 +91,6 @@
 
 .kanban-drop-zone.active {
   height: 8px;
-  background: rgba(74, 125, 255, 0.2);
-  border: 1px dashed #4a7dff;
+  background: var(--color-accent-bg-light);
+  border: 1px dashed var(--color-accent);
 }

@@ -19,7 +19,7 @@
   background: none;
   cursor: pointer;
   font-size: 0.9rem;
-  color: #888;
+  color: var(--color-text-faint);
   opacity: 0;
   flex-shrink: 0;
   display: flex;
@@ -30,8 +30,8 @@
 }
 
 .tree-add-btn:hover {
-  background: #ddd;
-  color: #555;
+  background: var(--color-border-primary);
+  color: var(--color-text-tertiary);
 }
 
 .tree-item-label {
@@ -46,18 +46,18 @@
   font-size: 0.84rem;
   text-align: left;
   border-radius: 4px;
-  color: #333;
+  color: var(--color-text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .tree-item-label:hover {
-  background: #e0e0e0;
+  background: var(--color-bg-hover);
 }
 
 .tree-item-label.active {
-  background: #d0d8e8;
+  background: var(--color-bg-active);
   font-weight: 500;
 }
 
@@ -69,7 +69,7 @@
   font-size: 0.55rem;
   transition: transform 0.15s;
   flex-shrink: 0;
-  color: #888;
+  color: var(--color-text-faint);
 }
 
 .tree-chevron.expanded {

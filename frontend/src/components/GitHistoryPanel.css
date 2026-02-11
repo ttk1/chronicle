@@ -10,13 +10,13 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--color-border-primary);
 }
 
 .history-title {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #333;
+  color: var(--color-text-secondary);
 }
 
 .history-close-btn {
@@ -27,27 +27,27 @@
   cursor: pointer;
   border-radius: 4px;
   font-size: 0.85rem;
-  color: #666;
+  color: var(--color-text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .history-close-btn:hover {
-  background: #ddd;
+  background: var(--color-border-primary);
 }
 
 .history-loading {
   padding: 16px 12px;
   font-size: 0.8rem;
-  color: #888;
+  color: var(--color-text-faint);
   text-align: center;
 }
 
 .history-empty {
   padding: 16px 12px;
   font-size: 0.8rem;
-  color: #888;
+  color: var(--color-text-faint);
   text-align: center;
 }
 
@@ -58,12 +58,12 @@
 
 .history-commit {
   padding: 8px 12px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--color-border-divider);
   cursor: pointer;
 }
 
 .history-commit:hover {
-  background: #f0f4ff;
+  background: var(--color-bg-highlight);
 }
 
 .history-commit-top {
@@ -75,8 +75,8 @@
 .history-hash {
   font-family: monospace;
   font-size: 0.75rem;
-  color: #4a7dff;
-  background: #f0f4ff;
+  color: var(--color-accent);
+  background: var(--color-bg-highlight);
   padding: 1px 6px;
   border-radius: 3px;
   flex-shrink: 0;
@@ -84,14 +84,14 @@
 
 .history-date {
   font-size: 0.7rem;
-  color: #888;
+  color: var(--color-text-faint);
   margin-left: auto;
   flex-shrink: 0;
 }
 
 .history-message {
   font-size: 0.8rem;
-  color: #333;
+  color: var(--color-text-secondary);
   margin-top: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -106,25 +106,25 @@
 
 .history-action-btn {
   padding: 2px 8px;
-  border: 1px solid #ddd;
-  background: #fff;
+  border: 1px solid var(--color-border-primary);
+  background: var(--color-bg-surface);
   border-radius: 3px;
   cursor: pointer;
   font-size: 0.7rem;
-  color: #666;
+  color: var(--color-text-muted);
 }
 
 .history-action-btn:hover {
-  background: #f0f0f0;
+  background: var(--color-bg-sidebar);
 }
 
 .history-action-btn.restore {
-  color: #e65100;
-  border-color: #ffcc80;
+  color: var(--color-warning-text);
+  border-color: var(--color-warning-border);
 }
 
 .history-action-btn.restore:hover {
-  background: #fff3e0;
+  background: var(--color-warning-bg);
 }
 
 .history-load-more {
@@ -134,14 +134,14 @@
 
 .history-load-more button {
   padding: 4px 16px;
-  border: 1px solid #ddd;
-  background: #fff;
+  border: 1px solid var(--color-border-primary);
+  background: var(--color-bg-surface);
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.8rem;
-  color: #555;
+  color: var(--color-text-tertiary);
 }
 
 .history-load-more button:hover {
-  background: #f0f0f0;
+  background: var(--color-bg-sidebar);
 }

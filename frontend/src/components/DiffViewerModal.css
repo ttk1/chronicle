@@ -1,7 +1,7 @@
 .diff-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--color-shadow-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -9,19 +9,19 @@
 }
 
 .diff-modal {
-  background: #fff;
+  background: var(--color-bg-surface);
   border-radius: 8px;
   width: 700px;
   max-width: 90vw;
   max-height: 80vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 32px var(--color-shadow-modal);
 }
 
 .diff-header {
   padding: 16px 20px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--color-border-primary);
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -43,21 +43,21 @@
 .diff-header-hash {
   font-family: monospace;
   font-size: 0.8rem;
-  color: #4a7dff;
-  background: #f0f4ff;
+  color: var(--color-accent);
+  background: var(--color-bg-highlight);
   padding: 2px 8px;
   border-radius: 3px;
 }
 
 .diff-header-date {
   font-size: 0.75rem;
-  color: #888;
+  color: var(--color-text-faint);
 }
 
 .diff-header-message {
   font-size: 0.9rem;
   font-weight: 500;
-  color: #333;
+  color: var(--color-text-secondary);
 }
 
 .diff-close-btn {
@@ -68,7 +68,7 @@
   cursor: pointer;
   border-radius: 4px;
   font-size: 1rem;
-  color: #666;
+  color: var(--color-text-muted);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -76,7 +76,7 @@
 }
 
 .diff-close-btn:hover {
-  background: #eee;
+  background: var(--color-border-light);
 }
 
 .diff-body {
@@ -86,7 +86,7 @@
 }
 
 .diff-file {
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 .diff-file-header {
@@ -94,7 +94,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 20px;
-  background: #f8f8f8;
+  background: var(--color-bg-inset);
   font-size: 0.82rem;
   font-family: monospace;
   position: sticky;
@@ -110,30 +110,30 @@
 }
 
 .diff-change-badge.A {
-  background: #e6ffec;
-  color: #1a7f37;
+  background: var(--color-diff-add-bg);
+  color: var(--color-diff-add-text);
 }
 
 .diff-change-badge.M {
-  background: #ddf4ff;
-  color: #0969da;
+  background: var(--color-diff-mod-bg);
+  color: var(--color-diff-mod-text);
 }
 
 .diff-change-badge.D {
-  background: #ffebe9;
-  color: #cf222e;
+  background: var(--color-diff-del-bg);
+  color: var(--color-diff-del-text);
 }
 
 .diff-change-badge.R {
-  background: #fff3e0;
-  color: #e65100;
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
 }
 
 .diff-file-path {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #333;
+  color: var(--color-text-secondary);
 }
 
 .diff-content {
@@ -151,18 +151,18 @@
 }
 
 .diff-line.add {
-  background: #e6ffec;
-  color: #1a7f37;
+  background: var(--color-diff-add-bg);
+  color: var(--color-diff-add-text);
 }
 
 .diff-line.del {
-  background: #ffebe9;
-  color: #cf222e;
+  background: var(--color-diff-del-bg);
+  color: var(--color-diff-del-text);
 }
 
 .diff-line.hunk {
-  background: #ddf4ff;
-  color: #0969da;
+  background: var(--color-diff-mod-bg);
+  color: var(--color-diff-mod-text);
   padding-top: 4px;
   padding-bottom: 4px;
 }
@@ -170,6 +170,6 @@
 .diff-loading {
   padding: 32px;
   text-align: center;
-  color: #888;
+  color: var(--color-text-faint);
   font-size: 0.85rem;
 }

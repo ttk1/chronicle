@@ -10,13 +10,13 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--color-border-primary);
 }
 
 .search-title {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #333;
+  color: var(--color-text-secondary);
 }
 
 .search-close-btn {
@@ -27,14 +27,14 @@
   cursor: pointer;
   border-radius: 4px;
   font-size: 0.85rem;
-  color: #666;
+  color: var(--color-text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .search-close-btn:hover {
-  background: #ddd;
+  background: var(--color-border-primary);
 }
 
 .search-input-area {
@@ -42,7 +42,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 .search-input-row {
@@ -54,14 +54,14 @@
 .search-input-row input {
   flex: 1;
   padding: 6px 10px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border-primary);
   border-radius: 4px;
   font-size: 0.85rem;
   outline: none;
 }
 
 .search-input-row input:focus {
-  border-color: #4a7dff;
+  border-color: var(--color-accent);
 }
 
 .search-options {
@@ -71,32 +71,32 @@
 
 .search-options button {
   padding: 2px 6px;
-  border: 1px solid #ddd;
-  background: #fff;
+  border: 1px solid var(--color-border-primary);
+  background: var(--color-bg-surface);
   border-radius: 3px;
   cursor: pointer;
   font-size: 0.75rem;
-  color: #666;
+  color: var(--color-text-muted);
   line-height: 1.4;
 }
 
 .search-options button.active {
-  background: #4a7dff;
-  color: #fff;
-  border-color: #4a7dff;
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+  border-color: var(--color-accent);
 }
 
 .search-summary {
   padding: 6px 12px;
   font-size: 0.75rem;
-  color: #888;
-  border-bottom: 1px solid #eee;
+  color: var(--color-text-faint);
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 .search-loading {
   padding: 16px 12px;
   font-size: 0.8rem;
-  color: #888;
+  color: var(--color-text-faint);
   text-align: center;
 }
 
@@ -106,7 +106,7 @@
 }
 
 .search-result-file {
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--color-border-divider);
 }
 
 .search-file-header {
@@ -120,10 +120,11 @@
   cursor: pointer;
   text-align: left;
   font-size: 0.84rem;
+  color: var(--color-text-primary);
 }
 
 .search-file-header:hover {
-  background: #e0e0e0;
+  background: var(--color-bg-hover);
 }
 
 .search-file-icon {
@@ -141,8 +142,8 @@
 
 .search-match-count {
   font-size: 0.7rem;
-  color: #888;
-  background: #e8e8e8;
+  color: var(--color-text-faint);
+  background: var(--color-bg-button);
   padding: 1px 6px;
   border-radius: 8px;
   flex-shrink: 0;
@@ -151,7 +152,7 @@
 .search-file-path {
   padding: 0 12px 4px;
   font-size: 0.7rem;
-  color: #888;
+  color: var(--color-text-faint);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -172,15 +173,15 @@
   cursor: pointer;
   text-align: left;
   font-size: 0.78rem;
-  color: #555;
+  color: var(--color-text-tertiary);
 }
 
 .search-match-line:hover {
-  background: #f0f4ff;
+  background: var(--color-bg-highlight);
 }
 
 .search-line-number {
-  color: #888;
+  color: var(--color-text-faint);
   flex-shrink: 0;
   font-size: 0.7rem;
   min-width: 28px;
@@ -193,8 +194,8 @@
 }
 
 .search-highlight {
-  background: #fff3b0;
-  color: #1a1a1a;
+  background: var(--color-search-highlight-bg);
+  color: var(--color-search-highlight-text);
   font-weight: 600;
   padding: 0 1px;
   border-radius: 2px;

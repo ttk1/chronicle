@@ -1,7 +1,7 @@
 .dialog-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--color-shadow-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -9,12 +9,12 @@
 }
 
 .dialog {
-  background: #fff;
+  background: var(--color-bg-surface);
   border-radius: 8px;
   padding: 24px;
   width: 380px;
   max-width: 90vw;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 32px var(--color-shadow-heavy);
 }
 
 .dialog-title {
@@ -24,7 +24,7 @@
 
 .dialog-parent {
   font-size: 0.75rem;
-  color: #888;
+  color: var(--color-text-faint);
   margin: 0 0 16px;
 }
 
@@ -39,7 +39,7 @@
 .dialog-field input,
 .dialog-field select {
   padding: 6px 10px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--color-border-secondary);
   border-radius: 4px;
   font-size: 0.9rem;
 }
@@ -60,13 +60,13 @@
 }
 
 .dialog-btn.cancel {
-  background: #e0e0e0;
-  color: #333;
+  background: var(--color-bg-hover);
+  color: var(--color-text-secondary);
 }
 
 .dialog-btn.primary {
-  background: #4a7dff;
-  color: #fff;
+  background: var(--color-accent);
+  color: var(--color-accent-text);
 }
 
 .dialog-btn.primary:disabled {
