@@ -1,0 +1,141 @@
+.calendar-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid #ddd;
+}
+
+.calendar-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.calendar-close-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-close-btn:hover {
+  background: #ddd;
+}
+
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.calendar-nav-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: #e8e8e8;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #555;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-nav-btn:hover {
+  background: #ddd;
+}
+
+.calendar-month-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.calendar-today-btn {
+  margin: 8px 12px;
+  padding: 6px 12px;
+  background: #4a7dff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.calendar-today-btn:hover {
+  background: #3a6de8;
+}
+
+.calendar-today-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.calendar-loading {
+  padding: 16px 12px;
+  font-size: 0.8rem;
+  color: #888;
+  text-align: center;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  padding: 4px 8px;
+}
+
+.calendar-weekday {
+  text-align: center;
+  font-size: 0.7rem;
+  color: #888;
+  padding: 4px 0;
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  cursor: default;
+  color: #555;
+}
+
+.calendar-day.has-entry {
+  background: #e3f2fd;
+  color: #1565c0;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.calendar-day.has-entry:hover {
+  background: #bbdefb;
+}
+
+.calendar-day.today {
+  border: 2px solid #4a7dff;
+}
+
+.calendar-day.empty {
+  color: transparent;
+}

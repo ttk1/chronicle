@@ -6,6 +6,8 @@ import CreatePageDialog from "./components/CreatePageDialog";
 import SearchPanel from "./components/SearchPanel";
 import GitCommitDialog from "./components/GitCommitDialog";
 import GitHistoryPanel from "./components/GitHistoryPanel";
+import CalendarView from "./components/CalendarView";
+import KanbanView from "./components/KanbanView";
 import AutocompletePopup, {
   type AutocompleteItem,
 } from "./components/AutocompletePopup";
@@ -63,6 +65,7 @@ function App() {
   const [assetIndex, setAssetIndex] = useState<AssetItem[]>([]);
   const [searchMode, setSearchMode] = useState(false);
   const [historyMode, setHistoryMode] = useState(false);
+  const [calendarMode, setCalendarMode] = useState(false);
   const [commitDialogOpen, setCommitDialogOpen] = useState(false);
 
   const refreshTree = useCallback(async () => {
@@ -91,6 +94,7 @@ function App() {
         e.preventDefault();
         setSearchMode((prev) => !prev);
         setHistoryMode(false);
+        setCalendarMode(false);
       }
     };
     document.addEventListener("keydown", handleGlobalKeyDown);
@@ -129,6 +133,17 @@ function App() {
       setContent(updated);
       if (currentPath) {
         saveNote(currentPath, updated);
+      }
+    },
+    [currentPath]
+  );
+
+  const handleKanbanChange = useCallback(
+    (newMarkdown: string) => {
+      contentRef.current = newMarkdown;
+      setContent(newMarkdown);
+      if (currentPath) {
+        saveNote(currentPath, newMarkdown);
       }
     },
     [currentPath]
@@ -229,6 +244,34 @@ function App() {
       );
     }
 
+    if (noteType === "kanban") {
+      return (
+        <>
+          <div className="editor-toolbar">
+            <span className="editor-path">{currentPath}</span>
+            <div className="toolbar-actions">
+              <span className="type-badge kanban">Kanban</span>
+              <button
+                className="toolbar-btn"
+                onClick={() => setNoteType("note")}
+              >
+                Edit Raw
+              </button>
+              <button className="save-btn" onClick={handleSave}>
+                Save
+              </button>
+            </div>
+          </div>
+          <div className="editor-wrapper">
+            <KanbanView
+              content={content}
+              onContentChange={handleKanbanChange}
+            />
+          </div>
+        </>
+      );
+    }
+
     return (
       <>
         <div className="editor-toolbar">
@@ -268,9 +311,21 @@ function App() {
               onClick={() => {
                 setSearchMode((prev) => !prev);
                 setHistoryMode(false);
+                setCalendarMode(false);
               }}
             >
               {"\u{1F50D}"}
+            </button>
+            <button
+              className={`sidebar-add-btn${calendarMode ? " active" : ""}`}
+              title="Calendar"
+              onClick={() => {
+                setCalendarMode((prev) => !prev);
+                setSearchMode(false);
+                setHistoryMode(false);
+              }}
+            >
+              {"\u{1F4C6}"}
             </button>
             <button
               className={`sidebar-add-btn${historyMode ? " active" : ""}`}
@@ -278,6 +333,7 @@ function App() {
               onClick={() => {
                 setHistoryMode((prev) => !prev);
                 setSearchMode(false);
+                setCalendarMode(false);
               }}
             >
               {"\u{1F553}"}
@@ -303,6 +359,14 @@ function App() {
             <SearchPanel
               onOpenNote={openNote}
               onClose={() => setSearchMode(false)}
+            />
+          ) : calendarMode ? (
+            <CalendarView
+              onOpenNote={openNote}
+              onClose={() => setCalendarMode(false)}
+              onCreated={async () => {
+                await Promise.all([refreshTree(), refreshIndexes()]);
+              }}
             />
           ) : historyMode ? (
             <GitHistoryPanel

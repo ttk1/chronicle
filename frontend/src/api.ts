@@ -250,3 +250,49 @@ export async function checkLinks(): Promise<LinkCheckResponse> {
   if (!res.ok) throw new Error("Failed to check links");
   return res.json();
 }
+
+// Daily API
+
+export interface DailyEntry {
+  date: string;
+  path: string;
+  title: string;
+}
+
+export interface DailyCalendarResponse {
+  year: number;
+  month: number;
+  entries: DailyEntry[];
+}
+
+export interface DailyCreateResponse {
+  path: string;
+  status: "created" | "exists";
+}
+
+export async function createDailyToday(): Promise<DailyCreateResponse> {
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const res = await fetch(`${BASE}/daily/today`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ date: dateStr }),
+  });
+  if (!res.ok) throw new Error("Failed to create daily");
+  return res.json();
+}
+
+export async function getDailyCalendar(
+  year: number,
+  month: number
+): Promise<DailyCalendarResponse> {
+  const res = await fetch(`${BASE}/daily/calendar?year=${year}&month=${month}`);
+  if (!res.ok) throw new Error("Failed to get calendar");
+  return res.json();
+}
+
+export async function getDailyMonths(): Promise<{ months: string[] }> {
+  const res = await fetch(`${BASE}/daily/months`);
+  if (!res.ok) throw new Error("Failed to get daily months");
+  return res.json();
+}
