@@ -75,3 +75,44 @@ export async function createPage(
   if (!res.ok) throw new Error("Failed to create page");
   return res.json();
 }
+
+// Page index API (for autocomplete)
+
+export interface PageIndexItem {
+  path: string;
+  title: string;
+  type: string;
+}
+
+export async function getPageIndex(): Promise<PageIndexItem[]> {
+  const res = await fetch(`${BASE}/pages/index`);
+  if (!res.ok) throw new Error("Failed to get page index");
+  const data = await res.json();
+  return data.pages;
+}
+
+// Assets API
+
+export interface AssetItem {
+  filename: string;
+  path: string;
+  size: number;
+}
+
+export async function uploadAsset(file: File | Blob): Promise<{ path: string; filename: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`${BASE}/assets/upload`, {
+    method: "POST",
+    body: formData,
+  });
+  if (!res.ok) throw new Error("Failed to upload asset");
+  return res.json();
+}
+
+export async function getAssetIndex(): Promise<AssetItem[]> {
+  const res = await fetch(`${BASE}/assets/index`);
+  if (!res.ok) throw new Error("Failed to get asset index");
+  const data = await res.json();
+  return data.images;
+}

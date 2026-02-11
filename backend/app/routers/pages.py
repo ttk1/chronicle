@@ -244,6 +244,21 @@ def move_page(page_path: str, body: PageMove):
     }
 
 
+@router.get("/pages/index")
+def page_index():
+    """Return a flat list of all pages for autocomplete."""
+    pages = []
+    for md_file in sorted(VAULT_DIR.rglob("*.md")):
+        rel = md_file.relative_to(VAULT_DIR).as_posix()
+        meta = _parse_frontmatter(md_file)
+        pages.append({
+            "path": rel,
+            "title": meta.get("title", md_file.stem),
+            "type": meta.get("type", "note"),
+        })
+    return {"pages": pages}
+
+
 @router.get("/templates/{page_type}")
 def get_template(page_type: str):
     """Get a page template by type."""

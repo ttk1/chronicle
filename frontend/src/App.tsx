@@ -3,14 +3,29 @@ import MilkdownEditor from "./components/MilkdownEditor";
 import TreeView from "./components/TreeView";
 import TasksView from "./components/TasksView";
 import CreatePageDialog from "./components/CreatePageDialog";
+import AutocompletePopup, {
+  type AutocompleteItem,
+} from "./components/AutocompletePopup";
 import {
   createPage,
+  getAssetIndex,
   getNote,
+  getPageIndex,
   getTree,
   saveNote,
+  type AssetItem,
+  type PageIndexItem,
   type TreeNode,
 } from "./api";
+import { computeRelativePath } from "./utils/relativePath";
 import "./App.css";
+
+const TYPE_ICONS: Record<string, string> = {
+  note: "\u{1F4DD}",
+  daily: "\u{1F4C5}",
+  tasks: "\u{2705}",
+  kanban: "\u{1F4CB}",
+};
 
 function extractFrontmatter(content: string): Record<string, unknown> {
   const match = content.match(/^---\n([\s\S]*?)\n---/);
@@ -35,14 +50,34 @@ function App() {
   const contentRef = useRef(content);
   contentRef.current = content;
 
+  // Autocomplete state
+  const [autocomplete, setAutocomplete] = useState<{
+    mode: "link" | "image";
+    position: { top: number; left: number };
+    items: AutocompleteItem[];
+  } | null>(null);
+  const [pageIndex, setPageIndex] = useState<PageIndexItem[]>([]);
+  const [assetIndex, setAssetIndex] = useState<AssetItem[]>([]);
+
   const refreshTree = useCallback(async () => {
     const data = await getTree();
     setTree(data.children);
   }, []);
 
+  const refreshIndexes = useCallback(async () => {
+    const [pages, assets] = await Promise.all([
+      getPageIndex(),
+      getAssetIndex(),
+    ]);
+    setPageIndex(pages);
+    setAssetIndex(assets);
+  }, []);
+
   useEffect(() => {
-    refreshTree().finally(() => setLoading(false));
-  }, [refreshTree]);
+    Promise.all([refreshTree(), refreshIndexes()]).finally(() =>
+      setLoading(false)
+    );
+  }, [refreshTree, refreshIndexes]);
 
   const openNote = useCallback(async (path: string) => {
     const note = await getNote(path);
@@ -59,8 +94,8 @@ function App() {
   const handleSave = useCallback(async () => {
     if (!currentPath) return;
     await saveNote(currentPath, contentRef.current);
-    await refreshTree();
-  }, [currentPath, refreshTree]);
+    await Promise.all([refreshTree(), refreshIndexes()]);
+  }, [currentPath, refreshTree, refreshIndexes]);
 
   const handleTaskToggle = useCallback(
     (lineIndex: number) => {
@@ -86,10 +121,56 @@ function App() {
       if (!createTarget) return;
       const result = await createPage(createTarget, title, type);
       setCreateTarget(null);
-      await refreshTree();
+      await Promise.all([refreshTree(), refreshIndexes()]);
       await openNote(result.path);
     },
-    [createTarget, refreshTree, openNote]
+    [createTarget, refreshTree, refreshIndexes, openNote]
+  );
+
+  // Autocomplete handlers
+  const handleTriggerLinkAutocomplete = useCallback(
+    (pos: { top: number; left: number }) => {
+      const items: AutocompleteItem[] = pageIndex.map((p) => ({
+        title: p.title,
+        path: p.path,
+        type: p.type,
+        icon: TYPE_ICONS[p.type] || "\u{1F4C4}",
+      }));
+      setAutocomplete({ mode: "link", position: pos, items });
+    },
+    [pageIndex]
+  );
+
+  const handleTriggerImageAutocomplete = useCallback(
+    (pos: { top: number; left: number }) => {
+      const items: AutocompleteItem[] = assetIndex.map((a) => ({
+        title: a.filename,
+        path: a.path,
+        type: "image",
+        icon: "\u{1F5BC}",
+      }));
+      setAutocomplete({ mode: "image", position: pos, items });
+    },
+    [assetIndex]
+  );
+
+  const handleAutocompleteSelect = useCallback(
+    (item: AutocompleteItem) => {
+      if (!currentPath) return;
+      const insertFn = (window as unknown as Record<string, unknown>)
+        .__chronicle_insertText as ((text: string) => void) | undefined;
+      if (!insertFn) return;
+
+      const relPath = computeRelativePath(currentPath, item.path);
+
+      if (autocomplete?.mode === "image") {
+        insertFn(`](${relPath})`);
+      } else {
+        insertFn(`${item.title}](${relPath})`);
+      }
+      setAutocomplete(null);
+    },
+    [currentPath, autocomplete]
   );
 
   if (loading) {
@@ -147,7 +228,10 @@ function App() {
           <MilkdownEditor
             key={currentPath}
             defaultValue={content}
+            currentPath={currentPath}
             onChange={handleChange}
+            onTriggerLinkAutocomplete={handleTriggerLinkAutocomplete}
+            onTriggerImageAutocomplete={handleTriggerImageAutocomplete}
           />
         </div>
       </>
@@ -182,6 +266,14 @@ function App() {
           parentPath={createTarget}
           onSubmit={handleCreatePage}
           onClose={() => setCreateTarget(null)}
+        />
+      )}
+      {autocomplete && (
+        <AutocompletePopup
+          items={autocomplete.items}
+          position={autocomplete.position}
+          onSelect={handleAutocompleteSelect}
+          onClose={() => setAutocomplete(null)}
         />
       )}
     </div>
