@@ -1,8 +1,12 @@
 # Chronicle
 
+> **Status: 開発中** — 基本機能は実装済みですが、改善・機能追加を継続しています。
+
 ファイルベースのマークダウンメモアプリケーション。
 データは標準 Markdown ファイルとしてディレクトリに保存し、Git で履歴管理する。
 VS Code、Obsidian、Typora 等の他エディタでもそのまま開ける互換性を重視した設計。
+
+本プロジェクトのコーディングはすべて [Claude Code](https://docs.anthropic.com/en/docs/claude-code) を使用して行っています。
 
 ## 特徴
 
