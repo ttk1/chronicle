@@ -32,9 +32,13 @@ const TYPE_ICONS: Record<string, string> = {
   kanban: "\u{1F4CB}",
 };
 
-function extractFrontmatter(content: string): Record<string, unknown> {
-  const match = content.match(/^---\n([\s\S]*?)\n---/);
-  if (!match) return {};
+function splitFrontmatter(content: string): {
+  raw: string;
+  body: string;
+  meta: Record<string, unknown>;
+} {
+  const match = content.match(/^---\n([\s\S]*?)\n---\n?/);
+  if (!match) return { raw: "", body: content, meta: {} };
   const meta: Record<string, unknown> = {};
   for (const line of match[1].split("\n")) {
     const idx = line.indexOf(":");
@@ -42,7 +46,7 @@ function extractFrontmatter(content: string): Record<string, unknown> {
       meta[line.slice(0, idx).trim()] = line.slice(idx + 1).trim();
     }
   }
-  return meta;
+  return { raw: match[0], body: content.slice(match[0].length), meta };
 }
 
 function App() {
@@ -67,6 +71,7 @@ function App() {
   const [historyMode, setHistoryMode] = useState(false);
   const [calendarMode, setCalendarMode] = useState(false);
   const [commitDialogOpen, setCommitDialogOpen] = useState(false);
+  const [frontmatterRaw, setFrontmatterRaw] = useState<string>("");
 
   const refreshTree = useCallback(async () => {
     const data = await getTree();
@@ -103,9 +108,10 @@ function App() {
 
   const openNote = useCallback(async (path: string) => {
     const note = await getNote(path);
-    setContent(note.content);
+    const { raw, body, meta } = splitFrontmatter(note.content);
+    setFrontmatterRaw(raw);
+    setContent(body);
     setCurrentPath(path);
-    const meta = extractFrontmatter(note.content);
     setNoteType(typeof meta.type === "string" ? meta.type : "note");
   }, []);
 
@@ -115,9 +121,9 @@ function App() {
 
   const handleSave = useCallback(async () => {
     if (!currentPath) return;
-    await saveNote(currentPath, contentRef.current);
+    await saveNote(currentPath, frontmatterRaw + contentRef.current);
     await Promise.all([refreshTree(), refreshIndexes()]);
-  }, [currentPath, refreshTree, refreshIndexes]);
+  }, [currentPath, frontmatterRaw, refreshTree, refreshIndexes]);
 
   const handleTaskToggle = useCallback(
     (lineIndex: number) => {
@@ -132,10 +138,10 @@ function App() {
       contentRef.current = updated;
       setContent(updated);
       if (currentPath) {
-        saveNote(currentPath, updated);
+        saveNote(currentPath, frontmatterRaw + updated);
       }
     },
-    [currentPath]
+    [currentPath, frontmatterRaw]
   );
 
   const handleKanbanChange = useCallback(
@@ -143,19 +149,23 @@ function App() {
       contentRef.current = newMarkdown;
       setContent(newMarkdown);
       if (currentPath) {
-        saveNote(currentPath, newMarkdown);
+        saveNote(currentPath, frontmatterRaw + newMarkdown);
       }
     },
-    [currentPath]
+    [currentPath, frontmatterRaw]
   );
 
   const handleCreatePage = useCallback(
     async (title: string, type: string) => {
-      if (!createTarget) return;
-      const result = await createPage(createTarget, title, type);
-      setCreateTarget(null);
-      await Promise.all([refreshTree(), refreshIndexes()]);
-      await openNote(result.path);
+      if (createTarget === null) return;
+      try {
+        const result = await createPage(createTarget, title, type);
+        setCreateTarget(null);
+        await Promise.all([refreshTree(), refreshIndexes()]);
+        await openNote(result.path);
+      } catch (err) {
+        alert(err instanceof Error ? err.message : "Failed to create page");
+      }
     },
     [createTarget, refreshTree, refreshIndexes, openNote]
   );
