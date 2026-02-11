@@ -150,3 +150,103 @@ export async function searchNotes(params: {
   if (!res.ok) throw new Error("Search failed");
   return res.json();
 }
+
+// Git API
+
+export interface CommitInfo {
+  hash: string;
+  short_hash: string;
+  author: string;
+  date: string;
+  message: string;
+}
+
+export interface CommitLogResponse {
+  commits: CommitInfo[];
+  total: number;
+  page: number;
+  per_page: number;
+}
+
+export interface DiffFile {
+  path: string;
+  change_type: string;
+  diff_text: string;
+}
+
+export interface DiffResponse {
+  hash: string;
+  message: string;
+  author: string;
+  date: string;
+  files: DiffFile[];
+}
+
+export async function gitCommit(message: string): Promise<CommitInfo> {
+  const res = await fetch(`${BASE}/git/commit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message }),
+  });
+  if (!res.ok) throw new Error("Failed to commit");
+  return res.json();
+}
+
+export async function gitLog(page = 1, perPage = 50): Promise<CommitLogResponse> {
+  const res = await fetch(`${BASE}/git/log?page=${page}&per_page=${perPage}`);
+  if (!res.ok) throw new Error("Failed to get log");
+  return res.json();
+}
+
+export async function gitDiff(hash: string): Promise<DiffResponse> {
+  const res = await fetch(`${BASE}/git/diff/${hash}`);
+  if (!res.ok) throw new Error("Failed to get diff");
+  return res.json();
+}
+
+export async function gitRestore(hash: string): Promise<CommitInfo> {
+  const res = await fetch(`${BASE}/git/restore/${hash}`, { method: "POST" });
+  if (!res.ok) throw new Error("Failed to restore");
+  return res.json();
+}
+
+// Maintenance API
+
+export interface GCPreviewResponse {
+  candidates: string[];
+  total_size: number;
+}
+
+export interface GCResult {
+  deleted: string[];
+  total_size: number;
+}
+
+export interface BrokenLink {
+  file: string;
+  line: number;
+  link: string;
+  suggestion: string | null;
+}
+
+export interface LinkCheckResponse {
+  broken: BrokenLink[];
+}
+
+export async function gcPreview(): Promise<GCPreviewResponse> {
+  const res = await fetch(`${BASE}/gc/preview`);
+  if (!res.ok) throw new Error("Failed to preview GC");
+  return res.json();
+}
+
+export async function runGC(): Promise<GCResult> {
+  const res = await fetch(`${BASE}/gc`, { method: "POST" });
+  if (!res.ok) throw new Error("Failed to run GC");
+  return res.json();
+}
+
+export async function checkLinks(): Promise<LinkCheckResponse> {
+  const res = await fetch(`${BASE}/links/check`);
+  if (!res.ok) throw new Error("Failed to check links");
+  return res.json();
+}

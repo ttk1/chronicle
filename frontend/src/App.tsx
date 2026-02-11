@@ -4,6 +4,8 @@ import TreeView from "./components/TreeView";
 import TasksView from "./components/TasksView";
 import CreatePageDialog from "./components/CreatePageDialog";
 import SearchPanel from "./components/SearchPanel";
+import GitCommitDialog from "./components/GitCommitDialog";
+import GitHistoryPanel from "./components/GitHistoryPanel";
 import AutocompletePopup, {
   type AutocompleteItem,
 } from "./components/AutocompletePopup";
@@ -60,6 +62,8 @@ function App() {
   const [pageIndex, setPageIndex] = useState<PageIndexItem[]>([]);
   const [assetIndex, setAssetIndex] = useState<AssetItem[]>([]);
   const [searchMode, setSearchMode] = useState(false);
+  const [historyMode, setHistoryMode] = useState(false);
+  const [commitDialogOpen, setCommitDialogOpen] = useState(false);
 
   const refreshTree = useCallback(async () => {
     const data = await getTree();
@@ -86,6 +90,7 @@ function App() {
       if (e.ctrlKey && e.shiftKey && e.key === "F") {
         e.preventDefault();
         setSearchMode((prev) => !prev);
+        setHistoryMode(false);
       }
     };
     document.addEventListener("keydown", handleGlobalKeyDown);
@@ -260,9 +265,29 @@ function App() {
             <button
               className={`sidebar-add-btn${searchMode ? " active" : ""}`}
               title="Search (Ctrl+Shift+F)"
-              onClick={() => setSearchMode((prev) => !prev)}
+              onClick={() => {
+                setSearchMode((prev) => !prev);
+                setHistoryMode(false);
+              }}
             >
               {"\u{1F50D}"}
+            </button>
+            <button
+              className={`sidebar-add-btn${historyMode ? " active" : ""}`}
+              title="Git History"
+              onClick={() => {
+                setHistoryMode((prev) => !prev);
+                setSearchMode(false);
+              }}
+            >
+              {"\u{1F553}"}
+            </button>
+            <button
+              className="sidebar-add-btn"
+              title="Git Commit"
+              onClick={() => setCommitDialogOpen(true)}
+            >
+              {"\u{2714}"}
             </button>
             <button
               className="sidebar-add-btn"
@@ -278,6 +303,15 @@ function App() {
             <SearchPanel
               onOpenNote={openNote}
               onClose={() => setSearchMode(false)}
+            />
+          ) : historyMode ? (
+            <GitHistoryPanel
+              onOpenNote={openNote}
+              onClose={() => setHistoryMode(false)}
+              onRestored={async () => {
+                await Promise.all([refreshTree(), refreshIndexes()]);
+                setHistoryMode(false);
+              }}
             />
           ) : (
             <TreeView
@@ -303,6 +337,14 @@ function App() {
           position={autocomplete.position}
           onSelect={handleAutocompleteSelect}
           onClose={() => setAutocomplete(null)}
+        />
+      )}
+      {commitDialogOpen && (
+        <GitCommitDialog
+          onClose={() => setCommitDialogOpen(false)}
+          onCommitted={async () => {
+            await Promise.all([refreshTree(), refreshIndexes()]);
+          }}
         />
       )}
     </div>

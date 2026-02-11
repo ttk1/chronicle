@@ -1,0 +1,147 @@
+.history-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid #ddd;
+}
+
+.history-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.history-close-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.history-close-btn:hover {
+  background: #ddd;
+}
+
+.history-loading {
+  padding: 16px 12px;
+  font-size: 0.8rem;
+  color: #888;
+  text-align: center;
+}
+
+.history-empty {
+  padding: 16px 12px;
+  font-size: 0.8rem;
+  color: #888;
+  text-align: center;
+}
+
+.history-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.history-commit {
+  padding: 8px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+}
+
+.history-commit:hover {
+  background: #f0f4ff;
+}
+
+.history-commit-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.history-hash {
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: #4a7dff;
+  background: #f0f4ff;
+  padding: 1px 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.history-date {
+  font-size: 0.7rem;
+  color: #888;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.history-message {
+  font-size: 0.8rem;
+  color: #333;
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.history-action-btn {
+  padding: 2px 8px;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.7rem;
+  color: #666;
+}
+
+.history-action-btn:hover {
+  background: #f0f0f0;
+}
+
+.history-action-btn.restore {
+  color: #e65100;
+  border-color: #ffcc80;
+}
+
+.history-action-btn.restore:hover {
+  background: #fff3e0;
+}
+
+.history-load-more {
+  padding: 8px 12px;
+  text-align: center;
+}
+
+.history-load-more button {
+  padding: 4px 16px;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.history-load-more button:hover {
+  background: #f0f0f0;
+}
