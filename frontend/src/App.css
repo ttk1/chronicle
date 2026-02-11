@@ -43,6 +43,11 @@
   background: #ccc;
 }
 
+.sidebar-add-btn.active {
+  background: #4a7dff;
+  color: #fff;
+}
+
 .sidebar-nav {
   flex: 1;
   overflow-y: auto;

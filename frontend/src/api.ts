@@ -116,3 +116,37 @@ export async function getAssetIndex(): Promise<AssetItem[]> {
   const data = await res.json();
   return data.images;
 }
+
+// Search API
+
+export interface SearchMatch {
+  line: number;
+  context: string;
+}
+
+export interface SearchResultItem {
+  path: string;
+  title: string;
+  type: string;
+  matches: SearchMatch[];
+}
+
+export interface SearchResponse {
+  query: string;
+  total: number;
+  results: SearchResultItem[];
+}
+
+export async function searchNotes(params: {
+  q: string;
+  regex?: boolean;
+  caseSensitive?: boolean;
+}): Promise<SearchResponse> {
+  const sp = new URLSearchParams();
+  sp.set("q", params.q);
+  if (params.regex) sp.set("regex", "true");
+  if (params.caseSensitive) sp.set("case", "true");
+  const res = await fetch(`${BASE}/search?${sp.toString()}`);
+  if (!res.ok) throw new Error("Search failed");
+  return res.json();
+}

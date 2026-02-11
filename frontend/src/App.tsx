@@ -3,6 +3,7 @@ import MilkdownEditor from "./components/MilkdownEditor";
 import TreeView from "./components/TreeView";
 import TasksView from "./components/TasksView";
 import CreatePageDialog from "./components/CreatePageDialog";
+import SearchPanel from "./components/SearchPanel";
 import AutocompletePopup, {
   type AutocompleteItem,
 } from "./components/AutocompletePopup";
@@ -58,6 +59,7 @@ function App() {
   } | null>(null);
   const [pageIndex, setPageIndex] = useState<PageIndexItem[]>([]);
   const [assetIndex, setAssetIndex] = useState<AssetItem[]>([]);
+  const [searchMode, setSearchMode] = useState(false);
 
   const refreshTree = useCallback(async () => {
     const data = await getTree();
@@ -78,6 +80,17 @@ function App() {
       setLoading(false)
     );
   }, [refreshTree, refreshIndexes]);
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === "F") {
+        e.preventDefault();
+        setSearchMode((prev) => !prev);
+      }
+    };
+    document.addEventListener("keydown", handleGlobalKeyDown);
+    return () => document.removeEventListener("keydown", handleGlobalKeyDown);
+  }, []);
 
   const openNote = useCallback(async (path: string) => {
     const note = await getNote(path);
@@ -243,21 +256,37 @@ function App() {
       <aside className="sidebar">
         <div className="sidebar-header">
           <h1 className="sidebar-title">Chronicle</h1>
-          <button
-            className="sidebar-add-btn"
-            title="New page in root"
-            onClick={() => setCreateTarget("")}
-          >
-            +
-          </button>
+          <div style={{ display: "flex", gap: "4px" }}>
+            <button
+              className={`sidebar-add-btn${searchMode ? " active" : ""}`}
+              title="Search (Ctrl+Shift+F)"
+              onClick={() => setSearchMode((prev) => !prev)}
+            >
+              {"\u{1F50D}"}
+            </button>
+            <button
+              className="sidebar-add-btn"
+              title="New page in root"
+              onClick={() => setCreateTarget("")}
+            >
+              +
+            </button>
+          </div>
         </div>
         <nav className="sidebar-nav">
-          <TreeView
-            tree={tree}
-            currentPath={currentPath}
-            onSelect={openNote}
-            onCreatePage={setCreateTarget}
-          />
+          {searchMode ? (
+            <SearchPanel
+              onOpenNote={openNote}
+              onClose={() => setSearchMode(false)}
+            />
+          ) : (
+            <TreeView
+              tree={tree}
+              currentPath={currentPath}
+              onSelect={openNote}
+              onCreatePage={setCreateTarget}
+            />
+          )}
         </nav>
       </aside>
       <main className="editor-area">{renderEditor()}</main>
