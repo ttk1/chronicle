@@ -110,12 +110,6 @@ function App() {
   }, []);
 
   useEffect(() => {
-    Promise.all([refreshTree(), refreshIndexes()]).finally(() =>
-      setLoading(false)
-    );
-  }, [refreshTree, refreshIndexes]);
-
-  useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.shiftKey && e.key === "F") {
         e.preventDefault();
@@ -142,7 +136,38 @@ function App() {
     setCurrentPath(path);
     setNoteType(typeof meta.type === "string" ? meta.type : "note");
     setEditorMode("wysiwyg");
+    // Update URL hash so reload restores the page
+    const newHash = "#" + encodeURIComponent(path);
+    if (window.location.hash !== newHash) {
+      window.history.pushState(null, "", newHash);
+    }
   }, []);
+
+  // Load initial page from URL hash and restore on reload
+  useEffect(() => {
+    Promise.all([refreshTree(), refreshIndexes()]).then(() => {
+      const hash = window.location.hash.slice(1);
+      if (hash) {
+        const path = decodeURIComponent(hash);
+        openNote(path).catch(() => {});
+      }
+    }).finally(() =>
+      setLoading(false)
+    );
+  }, [refreshTree, refreshIndexes, openNote]);
+
+  // Handle browser back/forward navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      const hash = window.location.hash.slice(1);
+      if (hash) {
+        const path = decodeURIComponent(hash);
+        openNote(path).catch(() => {});
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [openNote]);
 
   const handleChange = useCallback((markdown: string) => {
     contentRef.current = markdown;
