@@ -10,7 +10,7 @@ VS Code、Obsidian、Typora 等の他エディタでもそのまま開ける互�
 
 ## 特徴
 
-- **WYSIWYG エディタ** — Milkdown による Markdown ネイティブ編集
+- **View / Edit モード** — プレビュー閲覧と、ソースエディタ + ライブプレビューの Split 編集を切り替え
 - **ページ階層管理** — ディレクトリ構造をツリービューで表示・操作
 - **画像管理** — クリップボードペーストで画像アップロード、未参照画像の自動 GC
 - **リンクオートコンプリート** — `[` 入力でページ検索、`![` で画像検索
@@ -20,12 +20,15 @@ VS Code、Obsidian、Typora 等の他エディタでもそのまま開ける互�
 - **カレンダービュー** — 日報を月間カレンダーで一覧表示
 - **Kanban ボード** — `##` 見出しをカラム、`- [ ]` をカードとしてドラッグ＆ドロップ
 - **タスクビュー** — チェックボックスの一括操作と進捗バー表示
+- **ダークモード** — ライト / ダークテーマの切り替え（OS 設定に自動追従）
+- **キーボードショートカット** — `Ctrl+E` 編集切替、`Ctrl+S` 保存、`Ctrl+Shift+F` 検索
+- **URL 永続化** — 開いているページを URL ハッシュで保持、リロードしても復元
 
 ## 技術スタック
 
 | レイヤー | 技術 |
 |---|---|
-| フロントエンド | React + Vite + TypeScript + Milkdown v7 |
+| フロントエンド | React + Vite + TypeScript + react-markdown |
 | バックエンド | FastAPI (Python) |
 | Git 操作 | gitpython |
 | 検索 (フロント) | fuse.js |
@@ -58,7 +61,7 @@ docker compose down
 ```
 chronicle/
 ├── docker-compose.yml
-├── frontend/              # React + Milkdown
+├── frontend/              # React + TypeScript
 │   ├── Dockerfile
 │   ├── package.json
 │   └── src/
@@ -66,6 +69,7 @@ chronicle/
 │   ├── Dockerfile
 │   ├── requirements.txt
 │   └── app/
+│       ├── config.py      # 共通設定 (VAULT_DIR 等)
 │       └── routers/       # API エンドポイント
 └── vault/                 # メモデータ (Docker ボリュームとしてマウント)
     ├── assets/images/     # アップロード画像
@@ -95,7 +99,7 @@ tags: [tag1, tag2]
 
 | type | 表示 |
 |---|---|
-| `note` | Milkdown WYSIWYG エディタ |
+| `note` | Markdown プレビュー / ソースエディタ |
 | `daily` | 日報テンプレート (やったこと / 明日やること) |
 | `tasks` | チェックボックス + 進捗バー |
 | `kanban` | `##` = カラム、`- [ ]` = カード の Kanban ボード |
