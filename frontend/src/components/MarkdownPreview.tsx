@@ -7,14 +7,12 @@ import "./MarkdownPreview.css";
 
 interface MarkdownPreviewProps {
   content: string;
-  currentPath?: string;
-  onOpenNote?: (path: string) => void;
+  onLinkClick?: (href: string) => void;
 }
 
 export default function MarkdownPreview({
   content,
-  currentPath,
-  onOpenNote,
+  onLinkClick,
 }: MarkdownPreviewProps) {
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -22,19 +20,11 @@ export default function MarkdownPreview({
       const anchor = target.closest("a");
       if (!anchor) return;
       const href = anchor.getAttribute("href");
-      if (!href || !currentPath || !onOpenNote) return;
-      // Only handle relative links (not http/https)
-      if (/^https?:\/\//.test(href)) return;
+      if (!href || !onLinkClick) return;
       e.preventDefault();
-      // Resolve relative href against current note's directory
-      const dir = currentPath.split("/").slice(0, -1);
-      for (const seg of href.split("/")) {
-        if (seg === "..") dir.pop();
-        else if (seg !== "." && seg !== "") dir.push(seg);
-      }
-      onOpenNote(dir.join("/"));
+      onLinkClick(href);
     },
-    [currentPath, onOpenNote]
+    [onLinkClick]
   );
 
   return (

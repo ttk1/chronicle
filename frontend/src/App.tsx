@@ -24,7 +24,7 @@ import {
   type PageIndexItem,
   type TreeNode,
 } from "./api";
-import { computeRelativePath } from "./utils/relativePath";
+import { computeRelativePath, resolveNotePath } from "./utils/relativePath";
 import "./App.css";
 
 const TYPE_ICONS: Record<string, string> = {
@@ -33,6 +33,10 @@ const TYPE_ICONS: Record<string, string> = {
   tasks: "\u{2705}",
   kanban: "\u{1F4CB}",
 };
+
+type EditorMode = "wysiwyg" | "source" | "split";
+
+type SidebarMode = "tree" | "search" | "calendar" | "history";
 
 function splitFrontmatter(content: string): {
   raw: string;
@@ -68,12 +72,9 @@ function App() {
   } | null>(null);
   const [pageIndex, setPageIndex] = useState<PageIndexItem[]>([]);
   const [assetIndex, setAssetIndex] = useState<AssetItem[]>([]);
-  const [searchMode, setSearchMode] = useState(false);
-  const [historyMode, setHistoryMode] = useState(false);
-  const [calendarMode, setCalendarMode] = useState(false);
+  const [sidebarMode, setSidebarMode] = useState<SidebarMode>("tree");
   const [commitDialogOpen, setCommitDialogOpen] = useState(false);
   const [frontmatterRaw, setFrontmatterRaw] = useState<string>("");
-  type EditorMode = "wysiwyg" | "source" | "split";
   const [editorMode, setEditorMode] = useState<EditorMode>("wysiwyg");
   const [liveContent, setLiveContent] = useState<string>("");
 
@@ -95,6 +96,10 @@ function App() {
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
   }, []);
 
+  const toggleSidebarMode = useCallback((mode: SidebarMode) => {
+    setSidebarMode((prev) => (prev === mode ? "tree" : mode));
+  }, []);
+
   const refreshTree = useCallback(async () => {
     const data = await getTree();
     setTree(data.children);
@@ -109,13 +114,15 @@ function App() {
     setAssetIndex(assets);
   }, []);
 
+  const refreshAll = useCallback(async () => {
+    await Promise.all([refreshTree(), refreshIndexes()]);
+  }, [refreshTree, refreshIndexes]);
+
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.shiftKey && e.key === "F") {
         e.preventDefault();
-        setSearchMode((prev) => !prev);
-        setHistoryMode(false);
-        setCalendarMode(false);
+        toggleSidebarMode("search");
       }
       if (e.ctrlKey && !e.shiftKey && e.key === "s") {
         e.preventDefault();
@@ -124,7 +131,7 @@ function App() {
     };
     document.addEventListener("keydown", handleGlobalKeyDown);
     return () => document.removeEventListener("keydown", handleGlobalKeyDown);
-  }, []);
+  }, [toggleSidebarMode]);
 
   const openNote = useCallback(async (path: string) => {
     const note = await getNote(path);
@@ -136,33 +143,40 @@ function App() {
     setCurrentPath(path);
     setNoteType(typeof meta.type === "string" ? meta.type : "note");
     setEditorMode("wysiwyg");
-    // Update URL hash so reload restores the page
     const newHash = "#" + encodeURIComponent(path);
     if (window.location.hash !== newHash) {
       window.history.pushState(null, "", newHash);
     }
   }, []);
 
+  const navigateToLink = useCallback(
+    (href: string) => {
+      if (!currentPath || !href) return;
+      if (/^https?:\/\//.test(href)) {
+        window.open(href, "_blank");
+        return;
+      }
+      openNote(resolveNotePath(currentPath, href));
+    },
+    [currentPath, openNote]
+  );
+
   // Load initial page from URL hash and restore on reload
   useEffect(() => {
-    Promise.all([refreshTree(), refreshIndexes()]).then(() => {
+    refreshAll().then(() => {
       const hash = window.location.hash.slice(1);
       if (hash) {
-        const path = decodeURIComponent(hash);
-        openNote(path).catch(() => {});
+        openNote(decodeURIComponent(hash)).catch(() => {});
       }
-    }).finally(() =>
-      setLoading(false)
-    );
-  }, [refreshTree, refreshIndexes, openNote]);
+    }).finally(() => setLoading(false));
+  }, [refreshAll, openNote]);
 
   // Handle browser back/forward navigation
   useEffect(() => {
     const handlePopState = () => {
       const hash = window.location.hash.slice(1);
       if (hash) {
-        const path = decodeURIComponent(hash);
-        openNote(path).catch(() => {});
+        openNote(decodeURIComponent(hash)).catch(() => {});
       }
     };
     window.addEventListener("popstate", handlePopState);
@@ -188,8 +202,8 @@ function App() {
   const handleSave = useCallback(async () => {
     if (!currentPath) return;
     await saveNote(currentPath, frontmatterRaw + contentRef.current);
-    await Promise.all([refreshTree(), refreshIndexes()]);
-  }, [currentPath, frontmatterRaw, refreshTree, refreshIndexes]);
+    await refreshAll();
+  }, [currentPath, frontmatterRaw, refreshAll]);
 
   const handleSaveRef = useRef(handleSave);
   handleSaveRef.current = handleSave;
@@ -230,13 +244,13 @@ function App() {
       try {
         const result = await createPage(createTarget, title, type);
         setCreateTarget(null);
-        await Promise.all([refreshTree(), refreshIndexes()]);
+        await refreshAll();
         await openNote(result.path);
       } catch (err) {
         alert(err instanceof Error ? err.message : "Failed to create page");
       }
     },
-    [createTarget, refreshTree, refreshIndexes, openNote]
+    [createTarget, refreshAll, openNote]
   );
 
   // Autocomplete handlers
@@ -273,7 +287,6 @@ function App() {
       const relPath = computeRelativePath(currentPath, item.path);
 
       if (editorMode === "wysiwyg") {
-        // ProseMirror node insertion
         if (autocomplete?.mode === "image") {
           const insertImageFn = win.__chronicle_insertImage as
             | ((deleteCount: number, alt: string, src: string) => void)
@@ -288,7 +301,6 @@ function App() {
           insertLinkFn(1, item.title, relPath);
         }
       } else {
-        // Textarea plain text insertion
         const insertFn = win.__chronicle_source_insertAtCursor as
           | ((deleteCount: number, text: string) => void)
           | undefined;
@@ -308,6 +320,18 @@ function App() {
     return <div className="loading">Loading...</div>;
   }
 
+  const renderToolbar = (extra?: React.ReactNode) => (
+    <div className="editor-toolbar">
+      <span className="editor-path">{currentPath}</span>
+      <div className="toolbar-actions">
+        {extra}
+        <button className="save-btn" onClick={handleSave}>
+          Save
+        </button>
+      </div>
+    </div>
+  );
+
   const renderEditor = () => {
     if (!currentPath) {
       return (
@@ -320,21 +344,14 @@ function App() {
     if (noteType === "tasks") {
       return (
         <>
-          <div className="editor-toolbar">
-            <span className="editor-path">{currentPath}</span>
-            <div className="toolbar-actions">
+          {renderToolbar(
+            <>
               <span className="type-badge tasks">Tasks</span>
-              <button
-                className="toolbar-btn"
-                onClick={() => setNoteType("note")}
-              >
+              <button className="toolbar-btn" onClick={() => setNoteType("note")}>
                 Edit Raw
               </button>
-              <button className="save-btn" onClick={handleSave}>
-                Save
-              </button>
-            </div>
-          </div>
+            </>
+          )}
           <div className="editor-wrapper">
             <TasksView content={content} onToggle={handleTaskToggle} />
           </div>
@@ -345,21 +362,14 @@ function App() {
     if (noteType === "kanban") {
       return (
         <>
-          <div className="editor-toolbar">
-            <span className="editor-path">{currentPath}</span>
-            <div className="toolbar-actions">
+          {renderToolbar(
+            <>
               <span className="type-badge kanban">Kanban</span>
-              <button
-                className="toolbar-btn"
-                onClick={() => setNoteType("note")}
-              >
+              <button className="toolbar-btn" onClick={() => setNoteType("note")}>
                 Edit Raw
               </button>
-              <button className="save-btn" onClick={handleSave}>
-                Save
-              </button>
-            </div>
-          </div>
+            </>
+          )}
           <div className="editor-wrapper">
             <KanbanView
               content={content}
@@ -372,37 +382,24 @@ function App() {
 
     return (
       <>
-        <div className="editor-toolbar">
-          <span className="editor-path">{currentPath}</span>
-          <div className="toolbar-actions">
+        {renderToolbar(
+          <>
             {noteType !== "note" && (
               <span className={`type-badge ${noteType}`}>{noteType}</span>
             )}
             <div className="editor-mode-selector">
-              <button
-                className={`mode-btn${editorMode === "wysiwyg" ? " active" : ""}`}
-                onClick={() => handleEditorModeChange("wysiwyg")}
-              >
-                WYSIWYG
-              </button>
-              <button
-                className={`mode-btn${editorMode === "source" ? " active" : ""}`}
-                onClick={() => handleEditorModeChange("source")}
-              >
-                Source
-              </button>
-              <button
-                className={`mode-btn${editorMode === "split" ? " active" : ""}`}
-                onClick={() => handleEditorModeChange("split")}
-              >
-                Split
-              </button>
+              {(["wysiwyg", "source", "split"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  className={`mode-btn${editorMode === mode ? " active" : ""}`}
+                  onClick={() => handleEditorModeChange(mode)}
+                >
+                  {mode === "wysiwyg" ? "WYSIWYG" : mode === "source" ? "Source" : "Split"}
+                </button>
+              ))}
             </div>
-            <button className="save-btn" onClick={handleSave}>
-              Save
-            </button>
-          </div>
-        </div>
+          </>
+        )}
         <div className={`editor-wrapper${editorMode === "split" ? " split-layout" : ""}`}>
           {editorMode === "wysiwyg" && (
             <MilkdownEditor
@@ -412,16 +409,7 @@ function App() {
               onChange={handleChange}
               onTriggerLinkAutocomplete={handleTriggerLinkAutocomplete}
               onTriggerImageAutocomplete={handleTriggerImageAutocomplete}
-              onLinkClick={(href) => {
-                if (!currentPath || !href) return;
-                const dir = currentPath.split("/").slice(0, -1);
-                for (const seg of href.split("/")) {
-                  if (seg === "..") dir.pop();
-                  else if (seg !== "." && seg !== "") dir.push(seg);
-                }
-                const resolved = dir.join("/");
-                openNote(resolved);
-              }}
+              onLinkClick={navigateToLink}
             />
           )}
           {editorMode === "source" && (
@@ -450,8 +438,7 @@ function App() {
               <div className="split-preview">
                 <MarkdownPreview
                   content={liveContent}
-                  currentPath={currentPath}
-                  onOpenNote={openNote}
+                  onLinkClick={navigateToLink}
                 />
               </div>
             </>
@@ -475,35 +462,23 @@ function App() {
               {theme === "light" ? "\u{1F319}" : "\u{2600}\u{FE0F}"}
             </button>
             <button
-              className={`sidebar-add-btn${searchMode ? " active" : ""}`}
+              className={`sidebar-add-btn${sidebarMode === "search" ? " active" : ""}`}
               title="Search (Ctrl+Shift+F)"
-              onClick={() => {
-                setSearchMode((prev) => !prev);
-                setHistoryMode(false);
-                setCalendarMode(false);
-              }}
+              onClick={() => toggleSidebarMode("search")}
             >
               {"\u{1F50D}"}
             </button>
             <button
-              className={`sidebar-add-btn${calendarMode ? " active" : ""}`}
+              className={`sidebar-add-btn${sidebarMode === "calendar" ? " active" : ""}`}
               title="Calendar"
-              onClick={() => {
-                setCalendarMode((prev) => !prev);
-                setSearchMode(false);
-                setHistoryMode(false);
-              }}
+              onClick={() => toggleSidebarMode("calendar")}
             >
               {"\u{1F4C6}"}
             </button>
             <button
-              className={`sidebar-add-btn${historyMode ? " active" : ""}`}
+              className={`sidebar-add-btn${sidebarMode === "history" ? " active" : ""}`}
               title="Git History"
-              onClick={() => {
-                setHistoryMode((prev) => !prev);
-                setSearchMode(false);
-                setCalendarMode(false);
-              }}
+              onClick={() => toggleSidebarMode("history")}
             >
               {"\u{1F553}"}
             </button>
@@ -524,26 +499,24 @@ function App() {
           </div>
         </div>
         <nav className="sidebar-nav">
-          {searchMode ? (
+          {sidebarMode === "search" ? (
             <SearchPanel
               onOpenNote={openNote}
-              onClose={() => setSearchMode(false)}
+              onClose={() => setSidebarMode("tree")}
             />
-          ) : calendarMode ? (
+          ) : sidebarMode === "calendar" ? (
             <CalendarView
               onOpenNote={openNote}
-              onClose={() => setCalendarMode(false)}
-              onCreated={async () => {
-                await Promise.all([refreshTree(), refreshIndexes()]);
-              }}
+              onClose={() => setSidebarMode("tree")}
+              onCreated={refreshAll}
             />
-          ) : historyMode ? (
+          ) : sidebarMode === "history" ? (
             <GitHistoryPanel
               onOpenNote={openNote}
-              onClose={() => setHistoryMode(false)}
+              onClose={() => setSidebarMode("tree")}
               onRestored={async () => {
-                await Promise.all([refreshTree(), refreshIndexes()]);
-                setHistoryMode(false);
+                await refreshAll();
+                setSidebarMode("tree");
               }}
             />
           ) : (
@@ -575,9 +548,7 @@ function App() {
       {commitDialogOpen && (
         <GitCommitDialog
           onClose={() => setCommitDialogOpen(false)}
-          onCommitted={async () => {
-            await Promise.all([refreshTree(), refreshIndexes()]);
-          }}
+          onCommitted={refreshAll}
         />
       )}
     </div>

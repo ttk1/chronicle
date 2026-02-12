@@ -1,4 +1,17 @@
 /**
+ * Resolve a relative href against a note's path to get an absolute vault path.
+ * e.g. resolveNotePath("projects/alpha/tasks.md", "../beta/notes.md") → "projects/beta/notes.md"
+ */
+export function resolveNotePath(currentPath: string, href: string): string {
+  const dir = currentPath.split("/").slice(0, -1);
+  for (const seg of href.split("/")) {
+    if (seg === "..") dir.pop();
+    else if (seg !== "." && seg !== "") dir.push(seg);
+  }
+  return dir.join("/");
+}
+
+/**
  * Calculate the relative path from `from` to `to`.
  * Both paths should be relative to the vault root (e.g., "projects/alpha/tasks.md").
  */
