@@ -1,13 +1,7 @@
 import { useState } from "react";
 import type { TreeNode } from "../api";
+import { TYPE_ICONS } from "../utils/constants";
 import "./TreeView.css";
-
-const TYPE_ICONS: Record<string, string> = {
-  note: "\u{1F4DD}",
-  daily: "\u{1F4C5}",
-  tasks: "\u{2705}",
-  kanban: "\u{1F4CB}",
-};
 
 interface TreeItemProps {
   node: TreeNode;

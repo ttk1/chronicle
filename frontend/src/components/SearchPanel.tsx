@@ -1,13 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { searchNotes, type SearchResultItem } from "../api";
+import { TYPE_ICONS } from "../utils/constants";
 import "./SearchPanel.css";
-
-const TYPE_ICONS: Record<string, string> = {
-  note: "\u{1F4DD}",
-  daily: "\u{1F4C5}",
-  tasks: "\u{2705}",
-  kanban: "\u{1F4CB}",
-};
 
 function renderContext(context: string): React.ReactNode {
   const parts = context.split(/\*\*(.*?)\*\*/);

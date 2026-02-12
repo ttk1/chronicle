@@ -1,16 +1,11 @@
 import { useEffect, useState } from "react";
 import { gitDiff, type DiffResponse } from "../api";
+import { formatDate } from "../utils/constants";
 import "./DiffViewerModal.css";
 
 interface DiffViewerModalProps {
   commitHash: string;
   onClose: () => void;
-}
-
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function renderDiffLines(text: string) {

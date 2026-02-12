@@ -7,9 +7,10 @@ from pathlib import Path
 from fastapi import APIRouter
 from pydantic import BaseModel
 
+from app.config import VAULT_DIR
+
 router = APIRouter()
 
-VAULT_DIR = Path("/app/vault")
 IMAGES_DIR = VAULT_DIR / "assets" / "images"
 
 GRACE_PERIOD = timedelta(minutes=5)

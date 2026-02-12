@@ -1,18 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { gitLog, gitRestore, type CommitInfo } from "../api";
+import { formatDate } from "../utils/constants";
 import DiffViewerModal from "./DiffViewerModal";
 import "./GitHistoryPanel.css";
 
 interface GitHistoryPanelProps {
-  onOpenNote: (path: string) => void;
   onClose: () => void;
   onRestored: () => void;
-}
-
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 export default function GitHistoryPanel({

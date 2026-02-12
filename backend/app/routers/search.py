@@ -7,9 +7,9 @@ import frontmatter
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
-router = APIRouter()
+from app.config import VAULT_DIR
 
-VAULT_DIR = Path("/app/vault")
+router = APIRouter()
 
 
 class SearchMatch(BaseModel):

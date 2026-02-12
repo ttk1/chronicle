@@ -4,9 +4,9 @@ import frontmatter
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-router = APIRouter()
+from app.config import VAULT_DIR, resolve_path
 
-VAULT_DIR = Path("/app/vault")
+router = APIRouter()
 
 
 class NoteUpdate(BaseModel):
@@ -19,14 +19,6 @@ class NoteMeta(BaseModel):
     type: str
     created: str | None = None
     tags: list[str] = []
-
-
-def _resolve_path(note_path: str) -> Path:
-    """Resolve and validate a note path within the vault."""
-    resolved = (VAULT_DIR / note_path).resolve()
-    if not str(resolved).startswith(str(VAULT_DIR.resolve())):
-        raise HTTPException(status_code=400, detail="Invalid path")
-    return resolved
 
 
 def _parse_note(file_path: Path, rel_path: str) -> NoteMeta:
@@ -57,7 +49,7 @@ def list_notes():
 @router.get("/notes/{note_path:path}")
 def get_note(note_path: str):
     """Get a note's raw markdown content."""
-    file_path = _resolve_path(note_path)
+    file_path = resolve_path(note_path)
     if not file_path.exists() or not file_path.is_file():
         raise HTTPException(status_code=404, detail="Note not found")
     return {"path": note_path, "content": file_path.read_text(encoding="utf-8")}
@@ -66,7 +58,7 @@ def get_note(note_path: str):
 @router.put("/notes/{note_path:path}")
 def save_note(note_path: str, body: NoteUpdate):
     """Save (create or update) a note."""
-    file_path = _resolve_path(note_path)
+    file_path = resolve_path(note_path)
     file_path.parent.mkdir(parents=True, exist_ok=True)
     file_path.write_text(body.content, encoding="utf-8")
     return {"path": note_path, "status": "saved"}
@@ -75,7 +67,7 @@ def save_note(note_path: str, body: NoteUpdate):
 @router.delete("/notes/{note_path:path}")
 def delete_note(note_path: str):
     """Delete a note."""
-    file_path = _resolve_path(note_path)
+    file_path = resolve_path(note_path)
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Note not found")
     file_path.unlink()

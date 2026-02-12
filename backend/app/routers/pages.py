@@ -4,13 +4,12 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 
-import frontmatter
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-router = APIRouter()
+from app.config import VAULT_DIR, parse_frontmatter, resolve_path
 
-VAULT_DIR = Path("/app/vault")
+router = APIRouter()
 
 
 # ---------------------------------------------------------------------------
@@ -38,21 +37,6 @@ class PageMove(BaseModel):
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _resolve_path(rel_path: str) -> Path:
-    resolved = (VAULT_DIR / rel_path).resolve()
-    if not str(resolved).startswith(str(VAULT_DIR.resolve())):
-        raise HTTPException(status_code=400, detail="Invalid path")
-    return resolved
-
-
-def _parse_frontmatter(file_path: Path) -> dict:
-    try:
-        post = frontmatter.load(str(file_path))
-        return dict(post.metadata)
-    except Exception:
-        return {}
-
-
 def _build_tree(directory: Path) -> list[TreeNode]:
     """Recursively build a tree of pages from a directory."""
     children: list[TreeNode] = []
@@ -69,7 +53,7 @@ def _build_tree(directory: Path) -> list[TreeNode]:
         if entry.is_dir():
             # Directory = parent page
             index_file = entry / "_index.md"
-            meta = _parse_frontmatter(index_file) if index_file.exists() else {}
+            meta = parse_frontmatter(index_file) if index_file.exists() else {}
             node = TreeNode(
                 name=entry.name,
                 title=meta.get("title", entry.name),
@@ -81,7 +65,7 @@ def _build_tree(directory: Path) -> list[TreeNode]:
             children.append(node)
         elif entry.suffix == ".md" and entry.name != "_index.md":
             # Regular markdown file
-            meta = _parse_frontmatter(entry)
+            meta = parse_frontmatter(entry)
             rel = entry.relative_to(VAULT_DIR).as_posix()
             node = TreeNode(
                 name=entry.name,
@@ -192,7 +176,7 @@ def get_tree():
 @router.post("/pages/{parent_path:path}/create")
 def create_page(parent_path: str, body: PageCreate):
     """Create a child page under the given parent path."""
-    parent = _resolve_path(parent_path)
+    parent = resolve_path(parent_path)
 
     # Parent may be a file or directory
     if parent.is_file():
@@ -222,11 +206,11 @@ def create_page(parent_path: str, body: PageCreate):
 @router.put("/pages/{page_path:path}/move")
 def move_page(page_path: str, body: PageMove):
     """Move a page and update all referring links."""
-    src = _resolve_path(page_path)
+    src = resolve_path(page_path)
     if not src.exists():
         raise HTTPException(status_code=404, detail="Source not found")
 
-    dst = _resolve_path(body.destination)
+    dst = resolve_path(body.destination)
     if dst.exists():
         raise HTTPException(status_code=409, detail="Destination already exists")
 
@@ -250,7 +234,7 @@ def page_index():
     pages = []
     for md_file in sorted(VAULT_DIR.rglob("*.md")):
         rel = md_file.relative_to(VAULT_DIR).as_posix()
-        meta = _parse_frontmatter(md_file)
+        meta = parse_frontmatter(md_file)
         pages.append({
             "path": rel,
             "title": meta.get("title", md_file.stem),

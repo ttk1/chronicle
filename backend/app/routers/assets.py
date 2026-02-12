@@ -5,9 +5,10 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 
+from app.config import VAULT_DIR
+
 router = APIRouter()
 
-VAULT_DIR = Path("/app/vault")
 IMAGES_DIR = VAULT_DIR / "assets" / "images"
 
 ALLOWED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"}

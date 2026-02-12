@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import MilkdownEditor from "./components/MilkdownEditor";
 import TreeView from "./components/TreeView";
 import TasksView from "./components/TasksView";
 import CreatePageDialog from "./components/CreatePageDialog";
@@ -25,16 +24,10 @@ import {
   type TreeNode,
 } from "./api";
 import { computeRelativePath, resolveNotePath } from "./utils/relativePath";
+import { TYPE_ICONS } from "./utils/constants";
 import "./App.css";
 
-const TYPE_ICONS: Record<string, string> = {
-  note: "\u{1F4DD}",
-  daily: "\u{1F4C5}",
-  tasks: "\u{2705}",
-  kanban: "\u{1F4CB}",
-};
-
-type EditorMode = "wysiwyg" | "source" | "split";
+type EditorMode = "view" | "edit";
 
 type SidebarMode = "tree" | "search" | "calendar" | "history";
 
@@ -75,7 +68,7 @@ function App() {
   const [sidebarMode, setSidebarMode] = useState<SidebarMode>("tree");
   const [commitDialogOpen, setCommitDialogOpen] = useState(false);
   const [frontmatterRaw, setFrontmatterRaw] = useState<string>("");
-  const [editorMode, setEditorMode] = useState<EditorMode>("wysiwyg");
+  const [editorMode, setEditorMode] = useState<EditorMode>("view");
   const [liveContent, setLiveContent] = useState<string>("");
 
   // Theme
@@ -128,6 +121,10 @@ function App() {
         e.preventDefault();
         handleSaveRef.current();
       }
+      if (e.ctrlKey && !e.shiftKey && e.key === "e") {
+        e.preventDefault();
+        handleToggleEditRef.current();
+      }
     };
     document.addEventListener("keydown", handleGlobalKeyDown);
     return () => document.removeEventListener("keydown", handleGlobalKeyDown);
@@ -142,7 +139,7 @@ function App() {
     contentRef.current = body;
     setCurrentPath(path);
     setNoteType(typeof meta.type === "string" ? meta.type : "note");
-    setEditorMode("wysiwyg");
+    setEditorMode("view");
     const newHash = "#" + encodeURIComponent(path);
     if (window.location.hash !== newHash) {
       window.history.pushState(null, "", newHash);
@@ -183,21 +180,25 @@ function App() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, [openNote]);
 
-  const handleChange = useCallback((markdown: string) => {
-    contentRef.current = markdown;
-  }, []);
-
   const handleSourceChange = useCallback((markdown: string) => {
     contentRef.current = markdown;
     setLiveContent(markdown);
   }, []);
 
-  const handleEditorModeChange = useCallback((newMode: EditorMode) => {
-    const latest = contentRef.current;
-    setContent(latest);
-    setLiveContent(latest);
-    setEditorMode(newMode);
-  }, []);
+  const handleToggleEdit = useCallback(() => {
+    if (editorMode === "view") {
+      const latest = contentRef.current;
+      setContent(latest);
+      setLiveContent(latest);
+      setEditorMode("edit");
+    } else {
+      setEditorMode("view");
+      setLiveContent(contentRef.current);
+    }
+  }, [editorMode]);
+
+  const handleToggleEditRef = useRef(handleToggleEdit);
+  handleToggleEditRef.current = handleToggleEdit;
 
   const handleSave = useCallback(async () => {
     if (!currentPath) return;
@@ -283,37 +284,17 @@ function App() {
   const handleAutocompleteSelect = useCallback(
     (item: AutocompleteItem) => {
       if (!currentPath) return;
-      const win = window as unknown as Record<string, unknown>;
       const relPath = computeRelativePath(currentPath, item.path);
-
-      if (editorMode === "wysiwyg") {
-        if (autocomplete?.mode === "image") {
-          const insertImageFn = win.__chronicle_insertImage as
-            | ((deleteCount: number, alt: string, src: string) => void)
-            | undefined;
-          if (!insertImageFn) return;
-          insertImageFn(2, item.title, relPath);
-        } else {
-          const insertLinkFn = win.__chronicle_insertLink as
-            | ((deleteCount: number, title: string, href: string) => void)
-            | undefined;
-          if (!insertLinkFn) return;
-          insertLinkFn(1, item.title, relPath);
-        }
+      const insertFn = window.__chronicle_source_insertAtCursor;
+      if (!insertFn) return;
+      if (autocomplete?.mode === "image") {
+        insertFn(2, `![${item.title}](${relPath})`);
       } else {
-        const insertFn = win.__chronicle_source_insertAtCursor as
-          | ((deleteCount: number, text: string) => void)
-          | undefined;
-        if (!insertFn) return;
-        if (autocomplete?.mode === "image") {
-          insertFn(2, `![${item.title}](${relPath})`);
-        } else {
-          insertFn(1, `[${item.title}](${relPath})`);
-        }
+        insertFn(1, `[${item.title}](${relPath})`);
       }
       setAutocomplete(null);
     },
-    [currentPath, autocomplete, editorMode]
+    [currentPath, autocomplete]
   );
 
   if (loading) {
@@ -387,63 +368,43 @@ function App() {
             {noteType !== "note" && (
               <span className={`type-badge ${noteType}`}>{noteType}</span>
             )}
-            <div className="editor-mode-selector">
-              {(["wysiwyg", "source", "split"] as const).map((mode) => (
-                <button
-                  key={mode}
-                  className={`mode-btn${editorMode === mode ? " active" : ""}`}
-                  onClick={() => handleEditorModeChange(mode)}
-                >
-                  {mode === "wysiwyg" ? "WYSIWYG" : mode === "source" ? "Source" : "Split"}
-                </button>
-              ))}
-            </div>
+            <button
+              className={`mode-btn${editorMode === "edit" ? " active" : ""}`}
+              onClick={handleToggleEdit}
+              title="Ctrl+E"
+            >
+              {editorMode === "view" ? "Edit" : "View"}
+            </button>
           </>
         )}
-        <div className={`editor-wrapper${editorMode === "split" ? " split-layout" : ""}`}>
-          {editorMode === "wysiwyg" && (
-            <MilkdownEditor
-              key={currentPath + ":wysiwyg"}
-              defaultValue={content}
-              currentPath={currentPath}
-              onChange={handleChange}
-              onTriggerLinkAutocomplete={handleTriggerLinkAutocomplete}
-              onTriggerImageAutocomplete={handleTriggerImageAutocomplete}
+        {editorMode === "view" ? (
+          <div className="editor-wrapper">
+            <MarkdownPreview
+              content={contentRef.current}
               onLinkClick={navigateToLink}
             />
-          )}
-          {editorMode === "source" && (
-            <MarkdownSourceEditor
-              key={currentPath + ":source"}
-              defaultValue={content}
-              currentPath={currentPath}
-              onChange={handleChange}
-              onTriggerLinkAutocomplete={handleTriggerLinkAutocomplete}
-              onTriggerImageAutocomplete={handleTriggerImageAutocomplete}
-            />
-          )}
-          {editorMode === "split" && (
-            <>
-              <div className="split-source">
-                <MarkdownSourceEditor
-                  key={currentPath + ":split-source"}
-                  defaultValue={content}
-                  currentPath={currentPath}
-                  onChange={handleSourceChange}
-                  onTriggerLinkAutocomplete={handleTriggerLinkAutocomplete}
-                  onTriggerImageAutocomplete={handleTriggerImageAutocomplete}
-                />
-              </div>
-              <div className="split-divider" />
-              <div className="split-preview">
-                <MarkdownPreview
-                  content={liveContent}
-                  onLinkClick={navigateToLink}
-                />
-              </div>
-            </>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="editor-wrapper split-layout">
+            <div className="split-source">
+              <MarkdownSourceEditor
+                key={currentPath + ":edit"}
+                defaultValue={content}
+                currentPath={currentPath}
+                onChange={handleSourceChange}
+                onTriggerLinkAutocomplete={handleTriggerLinkAutocomplete}
+                onTriggerImageAutocomplete={handleTriggerImageAutocomplete}
+              />
+            </div>
+            <div className="split-divider" />
+            <div className="split-preview">
+              <MarkdownPreview
+                content={liveContent}
+                onLinkClick={navigateToLink}
+              />
+            </div>
+          </div>
+        )}
       </>
     );
   };
@@ -512,7 +473,6 @@ function App() {
             />
           ) : sidebarMode === "history" ? (
             <GitHistoryPanel
-              onOpenNote={openNote}
               onClose={() => setSidebarMode("tree")}
               onRestored={async () => {
                 await refreshAll();

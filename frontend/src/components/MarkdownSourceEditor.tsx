@@ -55,10 +55,9 @@ export default function MarkdownSourceEditor({
 
   // Expose insertAtCursor on window for autocomplete select
   useEffect(() => {
-    const win = window as unknown as Record<string, unknown>;
-    win.__chronicle_source_insertAtCursor = insertAtCursor;
+    window.__chronicle_source_insertAtCursor = insertAtCursor;
     return () => {
-      delete win.__chronicle_source_insertAtCursor;
+      delete window.__chronicle_source_insertAtCursor;
     };
   }, [insertAtCursor]);
 

@@ -6,11 +6,10 @@ import git as gitmodule
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
+from app.config import VAULT_DIR
 from app.routers.maintenance import run_gc
 
 router = APIRouter()
-
-VAULT_DIR = Path("/app/vault")
 
 
 # ---------------------------------------------------------------------------

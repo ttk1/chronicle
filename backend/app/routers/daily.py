@@ -4,13 +4,12 @@ import re
 from datetime import date, datetime, timezone
 from pathlib import Path
 
-import frontmatter
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
-router = APIRouter()
+from app.config import VAULT_DIR, parse_frontmatter
 
-VAULT_DIR = Path("/app/vault")
+router = APIRouter()
 
 
 # ---------------------------------------------------------------------------
@@ -89,14 +88,6 @@ def _extract_tomorrow_section(file_path: Path) -> list[str]:
                 result.append(line)
 
     return result
-
-
-def _parse_frontmatter(file_path: Path) -> dict:
-    try:
-        post = frontmatter.load(str(file_path))
-        return dict(post.metadata)
-    except Exception:
-        return {}
 
 
 # ---------------------------------------------------------------------------
@@ -185,7 +176,7 @@ def get_daily_calendar(
             except ValueError:
                 continue
 
-            meta = _parse_frontmatter(md_file)
+            meta = parse_frontmatter(md_file)
             rel = md_file.relative_to(VAULT_DIR).as_posix()
             entries.append(DailyEntry(
                 date=d.isoformat(),
