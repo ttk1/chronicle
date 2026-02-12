@@ -1,7 +1,53 @@
-import { useCallback, useRef, useEffect } from "react";
+import { useCallback, useRef, useEffect, useState } from "react";
+import hljs from "highlight.js/lib/core";
+import javascript from "highlight.js/lib/languages/javascript";
+import typescript from "highlight.js/lib/languages/typescript";
+import python from "highlight.js/lib/languages/python";
+import bash from "highlight.js/lib/languages/bash";
+import json from "highlight.js/lib/languages/json";
+import css from "highlight.js/lib/languages/css";
+import xml from "highlight.js/lib/languages/xml";
+import markdown from "highlight.js/lib/languages/markdown";
+import yaml from "highlight.js/lib/languages/yaml";
+import sql from "highlight.js/lib/languages/sql";
+import go from "highlight.js/lib/languages/go";
+import rust from "highlight.js/lib/languages/rust";
+import java from "highlight.js/lib/languages/java";
+import csharp from "highlight.js/lib/languages/csharp";
+import cpp from "highlight.js/lib/languages/cpp";
+import dockerfile from "highlight.js/lib/languages/dockerfile";
 import { uploadAsset } from "../api";
 import { computeRelativePath } from "../utils/relativePath";
+import {
+  escapeHtml,
+  wrap,
+  highlightMarkdownLine,
+  highlightMarkdownBlock,
+} from "../utils/markdownHighlight";
 import "./MarkdownSourceEditor.css";
+
+// Register highlight.js languages with aliases
+const LANGUAGES: [string, typeof javascript][] = [
+  ["javascript", javascript], ["js", javascript],
+  ["typescript", typescript], ["ts", typescript],
+  ["python", python], ["py", python],
+  ["bash", bash], ["sh", bash],
+  ["json", json],
+  ["css", css],
+  ["html", xml], ["xml", xml],
+  ["markdown", markdown], ["md", markdown],
+  ["yaml", yaml], ["yml", yaml],
+  ["sql", sql],
+  ["go", go],
+  ["rust", rust], ["rs", rust],
+  ["java", java],
+  ["csharp", csharp], ["cs", csharp],
+  ["cpp", cpp], ["c", cpp],
+  ["dockerfile", dockerfile], ["docker", dockerfile],
+];
+for (const [name, lang] of LANGUAGES) {
+  hljs.registerLanguage(name, lang);
+}
 
 interface MarkdownSourceEditorProps {
   defaultValue: string;
@@ -11,6 +57,95 @@ interface MarkdownSourceEditorProps {
   onTriggerImageAutocomplete?: (pos: { top: number; left: number }) => void;
 }
 
+function highlightCode(code: string, lang: string): string {
+  try {
+    if (lang && hljs.getLanguage(lang)) {
+      return hljs.highlight(code, { language: lang }).value;
+    }
+  } catch {
+    // fall through
+  }
+  return escapeHtml(code);
+}
+
+function flushCodeBlock(
+  codeLines: string[],
+  codeLang: string,
+  htmlLines: string[]
+) {
+  if (/^(md|markdown)$/i.test(codeLang)) {
+    htmlLines.push(highlightMarkdownBlock(codeLines.join("\n")));
+  } else {
+    const highlighted = highlightCode(codeLines.join("\n"), codeLang);
+    htmlLines.push(highlighted);
+  }
+}
+
+function highlightMarkdown(source: string): string {
+  const lines = source.split("\n");
+  const htmlLines: string[] = [];
+  let inFrontmatter = false;
+  let frontmatterDone = false;
+  let inCodeBlock = false;
+  let codeLang = "";
+  let codeLines: string[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Frontmatter detection (--- at start of file)
+    if (i === 0 && line.trim() === "---") {
+      inFrontmatter = true;
+      htmlLines.push(wrap("md-frontmatter", line));
+      continue;
+    }
+    if (inFrontmatter && !frontmatterDone) {
+      htmlLines.push(wrap("md-frontmatter", line));
+      if (line.trim() === "---") {
+        inFrontmatter = false;
+        frontmatterDone = true;
+      }
+      continue;
+    }
+
+    // Code fence open
+    if (!inCodeBlock && /^```/.test(line)) {
+      inCodeBlock = true;
+      codeLang = line.slice(3).trim();
+      codeLines = [];
+      htmlLines.push(wrap("md-code-fence", line));
+      continue;
+    }
+
+    // Code fence close
+    if (inCodeBlock && /^```\s*$/.test(line)) {
+      inCodeBlock = false;
+      flushCodeBlock(codeLines, codeLang, htmlLines);
+      htmlLines.push(wrap("md-code-fence", line));
+      codeLines = [];
+      codeLang = "";
+      continue;
+    }
+
+    if (inCodeBlock) {
+      codeLines.push(line);
+      continue;
+    }
+
+    // Normal markdown line (heading, hr, blockquote, list, inline)
+    htmlLines.push(highlightMarkdownLine(line));
+  }
+
+  // Handle unclosed code block (still typing)
+  if (inCodeBlock && codeLines.length > 0) {
+    flushCodeBlock(codeLines, codeLang, htmlLines);
+  }
+
+  return htmlLines.join("\n");
+}
+
+// ---- Component ----
+
 export default function MarkdownSourceEditor({
   defaultValue,
   currentPath,
@@ -19,6 +154,7 @@ export default function MarkdownSourceEditor({
   onTriggerImageAutocomplete,
 }: MarkdownSourceEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const highlightRef = useRef<HTMLPreElement>(null);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const triggerLinkRef = useRef(onTriggerLinkAutocomplete);
@@ -28,15 +164,31 @@ export default function MarkdownSourceEditor({
   const currentPathRef = useRef(currentPath);
   currentPathRef.current = currentPath;
 
+  const [highlightHtml, setHighlightHtml] = useState(() =>
+    highlightMarkdown(defaultValue)
+  );
+
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.value = defaultValue;
     }
+    setHighlightHtml(highlightMarkdown(defaultValue));
   }, [defaultValue]);
+
+  const syncScroll = useCallback(() => {
+    const ta = textareaRef.current;
+    const pre = highlightRef.current;
+    if (ta && pre) {
+      pre.scrollTop = ta.scrollTop;
+      pre.scrollLeft = ta.scrollLeft;
+    }
+  }, []);
 
   const fireChange = useCallback(() => {
     if (textareaRef.current) {
-      onChangeRef.current?.(textareaRef.current.value);
+      const value = textareaRef.current.value;
+      onChangeRef.current?.(value);
+      setHighlightHtml(highlightMarkdown(value));
     }
   }, []);
 
@@ -48,7 +200,9 @@ export default function MarkdownSourceEditor({
       const start = ta.selectionStart - deleteCount;
       const end = ta.selectionEnd;
       ta.setRangeText(text, start, end, "end");
-      onChangeRef.current?.(ta.value);
+      const value = ta.value;
+      onChangeRef.current?.(value);
+      setHighlightHtml(highlightMarkdown(value));
     },
     []
   );
@@ -121,12 +275,21 @@ export default function MarkdownSourceEditor({
   }, [insertAtCursor]);
 
   return (
-    <textarea
-      ref={textareaRef}
-      className="markdown-source-editor"
-      defaultValue={defaultValue}
-      onInput={fireChange}
-      spellCheck={false}
-    />
+    <div className="source-editor-wrapper">
+      <pre
+        ref={highlightRef}
+        className="source-highlight-layer"
+        aria-hidden="true"
+        dangerouslySetInnerHTML={{ __html: highlightHtml + "\n" }}
+      />
+      <textarea
+        ref={textareaRef}
+        className="markdown-source-editor"
+        defaultValue={defaultValue}
+        onInput={fireChange}
+        onScroll={syncScroll}
+        spellCheck={false}
+      />
+    </div>
   );
 }

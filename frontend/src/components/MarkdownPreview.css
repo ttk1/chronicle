@@ -50,7 +50,7 @@
 
 /* Code blocks */
 .markdown-preview pre {
-  background: var(--color-bg-elevated);
+  background: var(--hljs-bg);
   padding: 16px;
   border-radius: 8px;
   overflow-x: auto;
@@ -61,6 +61,7 @@
   background: none;
   color: inherit;
   padding: 0;
+  font-size: 0.875em;
 }
 
 /* Tables */

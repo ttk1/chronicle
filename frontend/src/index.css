@@ -80,6 +80,34 @@ body,
   --color-shadow-heavy: rgba(0, 0, 0, 0.2);
   --color-shadow-overlay: rgba(0, 0, 0, 0.4);
   --color-shadow-modal: rgba(0, 0, 0, 0.3);
+
+  /* Code syntax highlighting (highlight.js) */
+  --hljs-bg: #f6f8fa;
+  --hljs-color: #24292e;
+  --hljs-keyword: #d73a49;
+  --hljs-string: #032f62;
+  --hljs-number: #005cc5;
+  --hljs-comment: #6a737d;
+  --hljs-function: #6f42c1;
+  --hljs-class: #22863a;
+  --hljs-tag: #22863a;
+  --hljs-attr: #6f42c1;
+  --hljs-built-in: #005cc5;
+  --hljs-meta: #735c0f;
+  --hljs-deletion: #b31d28;
+  --hljs-addition: #22863a;
+
+  /* Markdown source editor syntax tokens */
+  --md-heading-color: #0550ae;
+  --md-bold-color: #24292e;
+  --md-italic-color: #6f42c1;
+  --md-code-color: #d73a49;
+  --md-link-color: #0969da;
+  --md-image-color: #8250df;
+  --md-quote-color: #57606a;
+  --md-list-marker-color: #d73a49;
+  --md-hr-color: #d0d7de;
+  --md-frontmatter-color: #6e7781;
 }
 
 [data-theme="dark"] {
@@ -151,6 +179,34 @@ body,
   --color-shadow-heavy: rgba(0, 0, 0, 0.4);
   --color-shadow-overlay: rgba(0, 0, 0, 0.6);
   --color-shadow-modal: rgba(0, 0, 0, 0.5);
+
+  /* Code syntax highlighting (highlight.js) */
+  --hljs-bg: #2a2a2e;
+  --hljs-color: #e0e0e0;
+  --hljs-keyword: #ff7b72;
+  --hljs-string: #a5d6ff;
+  --hljs-number: #79c0ff;
+  --hljs-comment: #8b949e;
+  --hljs-function: #d2a8ff;
+  --hljs-class: #7ee787;
+  --hljs-tag: #7ee787;
+  --hljs-attr: #d2a8ff;
+  --hljs-built-in: #79c0ff;
+  --hljs-meta: #d29922;
+  --hljs-deletion: #ffa198;
+  --hljs-addition: #7ee787;
+
+  /* Markdown source editor syntax tokens */
+  --md-heading-color: #79c0ff;
+  --md-bold-color: #e0e0e0;
+  --md-italic-color: #d2a8ff;
+  --md-code-color: #ff7b72;
+  --md-link-color: #58a6ff;
+  --md-image-color: #bc8cff;
+  --md-quote-color: #8b949e;
+  --md-list-marker-color: #ff7b72;
+  --md-hr-color: #484f58;
+  --md-frontmatter-color: #8b949e;
 }
 
 body {
@@ -168,47 +224,42 @@ body,
   transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
-/* Dark mode: Milkdown overrides */
-[data-theme="dark"] .milkdown,
-[data-theme="dark"] .milkdown .ProseMirror {
-  background: var(--color-bg-surface);
-  color: var(--color-text-primary);
+/* highlight.js theme (CSS variable based) */
+.hljs {
+  background: var(--hljs-bg);
+  color: var(--hljs-color);
 }
-
-[data-theme="dark"] .milkdown .ProseMirror code {
-  background: var(--color-bg-elevated);
-}
-
-[data-theme="dark"] .milkdown .ProseMirror pre {
-  background: var(--color-bg-elevated);
-}
-
-[data-theme="dark"] .milkdown .ProseMirror blockquote {
-  border-left-color: var(--color-border-primary);
-  color: var(--color-text-muted);
-}
-
-[data-theme="dark"] .milkdown .ProseMirror hr {
-  border-color: var(--color-border-primary);
-}
-
-[data-theme="dark"] .milkdown .ProseMirror a {
-  color: var(--color-accent);
-}
-
-[data-theme="dark"] .milkdown .ProseMirror table td,
-[data-theme="dark"] .milkdown .ProseMirror table th {
-  border-color: var(--color-border-primary);
-}
-
-[data-theme="dark"] .milkdown .ProseMirror table th {
-  background: var(--color-bg-elevated);
-}
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-type { color: var(--hljs-keyword); }
+.hljs-string,
+.hljs-template-variable,
+.hljs-regexp { color: var(--hljs-string); }
+.hljs-number { color: var(--hljs-number); }
+.hljs-comment,
+.hljs-doctag { color: var(--hljs-comment); font-style: italic; }
+.hljs-title.function_,
+.hljs-title { color: var(--hljs-function); }
+.hljs-title.class_,
+.hljs-variable.language_ { color: var(--hljs-class); }
+.hljs-tag { color: var(--hljs-tag); }
+.hljs-attr,
+.hljs-attribute { color: var(--hljs-attr); }
+.hljs-built_in,
+.hljs-variable.constant_ { color: var(--hljs-built-in); }
+.hljs-meta,
+.hljs-symbol { color: var(--hljs-meta); }
+.hljs-deletion { color: var(--hljs-deletion); }
+.hljs-addition { color: var(--hljs-addition); }
+.hljs-section { color: var(--hljs-keyword); font-weight: bold; }
+.hljs-emphasis { font-style: italic; }
+.hljs-strong { font-weight: bold; }
 
 /* Dark mode: form elements */
 [data-theme="dark"] input,
 [data-theme="dark"] select,
-[data-theme="dark"] textarea {
+[data-theme="dark"] textarea:not(.markdown-source-editor) {
   background: var(--color-bg-elevated);
   color: var(--color-text-primary);
   border-color: var(--color-border-primary);
