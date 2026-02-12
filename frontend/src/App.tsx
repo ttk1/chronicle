@@ -59,7 +59,6 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [createTarget, setCreateTarget] = useState<string | null>(null);
   const contentRef = useRef(content);
-  contentRef.current = content;
 
   // Autocomplete state
   const [autocomplete, setAutocomplete] = useState<{
@@ -124,6 +123,10 @@ function App() {
         setHistoryMode(false);
         setCalendarMode(false);
       }
+      if (e.ctrlKey && !e.shiftKey && e.key === "s") {
+        e.preventDefault();
+        handleSaveRef.current();
+      }
     };
     document.addEventListener("keydown", handleGlobalKeyDown);
     return () => document.removeEventListener("keydown", handleGlobalKeyDown);
@@ -135,6 +138,7 @@ function App() {
     setFrontmatterRaw(raw);
     setContent(body);
     setLiveContent(body);
+    contentRef.current = body;
     setCurrentPath(path);
     setNoteType(typeof meta.type === "string" ? meta.type : "note");
     setEditorMode("wysiwyg");
@@ -161,6 +165,9 @@ function App() {
     await saveNote(currentPath, frontmatterRaw + contentRef.current);
     await Promise.all([refreshTree(), refreshIndexes()]);
   }, [currentPath, frontmatterRaw, refreshTree, refreshIndexes]);
+
+  const handleSaveRef = useRef(handleSave);
+  handleSaveRef.current = handleSave;
 
   const handleTaskToggle = useCallback(
     (lineIndex: number) => {
