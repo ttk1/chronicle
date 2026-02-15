@@ -8,6 +8,7 @@ import GitHistoryPanel from "./components/GitHistoryPanel";
 import CalendarView from "./components/CalendarView";
 import KanbanView from "./components/KanbanView";
 import MarkdownSourceEditor from "./components/MarkdownSourceEditor";
+import FileHistoryPanel from "./components/FileHistoryPanel";
 import MarkdownPreview from "./components/MarkdownPreview";
 import AutocompletePopup, {
   type AutocompleteItem,
@@ -18,6 +19,7 @@ import {
   getNote,
   getPageIndex,
   getTree,
+  gitStatus,
   saveNote,
   type AssetItem,
   type PageIndexItem,
@@ -67,6 +69,8 @@ function App() {
   const [assetIndex, setAssetIndex] = useState<AssetItem[]>([]);
   const [sidebarMode, setSidebarMode] = useState<SidebarMode>("tree");
   const [commitDialogOpen, setCommitDialogOpen] = useState(false);
+  const [fileHistoryOpen, setFileHistoryOpen] = useState(false);
+  const [dirtyPaths, setDirtyPaths] = useState<Set<string>>(new Set());
   const [frontmatterRaw, setFrontmatterRaw] = useState<string>("");
   const [editorMode, setEditorMode] = useState<EditorMode>("view");
   const [liveContent, setLiveContent] = useState<string>("");
@@ -107,9 +111,18 @@ function App() {
     setAssetIndex(assets);
   }, []);
 
+  const refreshDirtyPaths = useCallback(async () => {
+    try {
+      const data = await gitStatus();
+      setDirtyPaths(new Set(data.files));
+    } catch {
+      // ignore
+    }
+  }, []);
+
   const refreshAll = useCallback(async () => {
-    await Promise.all([refreshTree(), refreshIndexes()]);
-  }, [refreshTree, refreshIndexes]);
+    await Promise.all([refreshTree(), refreshIndexes(), refreshDirtyPaths()]);
+  }, [refreshTree, refreshIndexes, refreshDirtyPaths]);
 
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -306,6 +319,13 @@ function App() {
       <span className="editor-path">{currentPath}</span>
       <div className="toolbar-actions">
         {extra}
+        <button
+          className="toolbar-btn"
+          onClick={() => setFileHistoryOpen(true)}
+          title="File History"
+        >
+          History
+        </button>
         <button className="save-btn" onClick={handleSave}>
           Save
         </button>
@@ -483,6 +503,7 @@ function App() {
             <TreeView
               tree={tree}
               currentPath={currentPath}
+              dirtyPaths={dirtyPaths}
               onSelect={openNote}
               onCreatePage={setCreateTarget}
             />
@@ -509,6 +530,19 @@ function App() {
         <GitCommitDialog
           onClose={() => setCommitDialogOpen(false)}
           onCommitted={refreshAll}
+        />
+      )}
+      {fileHistoryOpen && currentPath && (
+        <FileHistoryPanel
+          filePath={currentPath}
+          onClose={() => setFileHistoryOpen(false)}
+          onRestored={async () => {
+            setFileHistoryOpen(false);
+            await refreshAll();
+            if (currentPath) {
+              await openNote(currentPath);
+            }
+          }}
         />
       )}
     </div>

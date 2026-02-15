@@ -1,0 +1,21 @@
+.diff-line {
+  padding: 0 20px;
+  white-space: pre;
+}
+
+.diff-line.add {
+  background: var(--color-diff-add-bg);
+  color: var(--color-diff-add-text);
+}
+
+.diff-line.del {
+  background: var(--color-diff-del-bg);
+  color: var(--color-diff-del-text);
+}
+
+.diff-line.hunk {
+  background: var(--color-diff-mod-bg);
+  color: var(--color-diff-mod-text);
+  padding-top: 4px;
+  padding-bottom: 4px;
+}

@@ -1,26 +1,12 @@
 import { useEffect, useState } from "react";
 import { gitDiff, type DiffResponse } from "../api";
 import { formatDate } from "../utils/constants";
+import { renderDiffLines } from "../utils/renderDiffLines";
 import "./DiffViewerModal.css";
 
 interface DiffViewerModalProps {
   commitHash: string;
   onClose: () => void;
-}
-
-function renderDiffLines(text: string) {
-  if (!text) return null;
-  return text.split("\n").map((line, i) => {
-    let cls = "diff-line";
-    if (line.startsWith("+")) cls += " add";
-    else if (line.startsWith("-")) cls += " del";
-    else if (line.startsWith("@@")) cls += " hunk";
-    return (
-      <div key={i} className={cls}>
-        {line}
-      </div>
-    );
-  });
 }
 
 export default function DiffViewerModal({

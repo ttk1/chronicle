@@ -6,6 +6,7 @@ import "./TreeView.css";
 interface TreeItemProps {
   node: TreeNode;
   currentPath: string | null;
+  dirtyPaths: Set<string>;
   onSelect: (path: string) => void;
   onCreatePage: (parentPath: string) => void;
   depth: number;
@@ -14,6 +15,7 @@ interface TreeItemProps {
 function TreeItem({
   node,
   currentPath,
+  dirtyPaths,
   onSelect,
   onCreatePage,
   depth,
@@ -23,6 +25,7 @@ function TreeItem({
   const isDir = hasChildren || (node.path && node.path.endsWith("_index.md"));
   const icon = node.type ? TYPE_ICONS[node.type] || "\u{1F4C4}" : "\u{1F4C1}";
   const isActive = node.path === currentPath;
+  const isDirty = node.path ? dirtyPaths.has(node.path) : false;
 
   const handleClick = () => {
     if (node.path) {
@@ -55,6 +58,7 @@ function TreeItem({
           )}
           <span className="tree-icon">{icon}</span>
           <span className="tree-title">{node.title || node.name}</span>
+          {isDirty && <span className="tree-dirty-dot" title="Uncommitted changes" />}
         </button>
         {isDir && (
           <button
@@ -76,6 +80,7 @@ function TreeItem({
               key={child.path || child.name}
               node={child}
               currentPath={currentPath}
+              dirtyPaths={dirtyPaths}
               onSelect={onSelect}
               onCreatePage={onCreatePage}
               depth={depth + 1}
@@ -90,6 +95,7 @@ function TreeItem({
 interface TreeViewProps {
   tree: TreeNode[];
   currentPath: string | null;
+  dirtyPaths: Set<string>;
   onSelect: (path: string) => void;
   onCreatePage: (parentPath: string) => void;
 }
@@ -97,6 +103,7 @@ interface TreeViewProps {
 export default function TreeView({
   tree,
   currentPath,
+  dirtyPaths,
   onSelect,
   onCreatePage,
 }: TreeViewProps) {
@@ -107,6 +114,7 @@ export default function TreeView({
           key={node.path || node.name}
           node={node}
           currentPath={currentPath}
+          dirtyPaths={dirtyPaths}
           onSelect={onSelect}
           onCreatePage={onCreatePage}
           depth={0}

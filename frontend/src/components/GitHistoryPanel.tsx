@@ -43,8 +43,8 @@ export default function GitHistoryPanel({
     }
     try {
       await gitRestore(hash);
+      await loadCommits(1);
       onRestored();
-      loadCommits(1);
     } catch {
       alert("Restore failed");
     }

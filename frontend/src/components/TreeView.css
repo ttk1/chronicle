@@ -86,6 +86,15 @@
   text-overflow: ellipsis;
 }
 
+.tree-dirty-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
 .tree-children {
   display: flex;
   flex-direction: column;

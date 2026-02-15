@@ -182,11 +182,15 @@ export interface DiffResponse {
   files: DiffFile[];
 }
 
-export async function gitCommit(message: string): Promise<CommitInfo> {
+export async function gitCommit(message: string, files?: string[]): Promise<CommitInfo> {
+  const body: { message: string; files?: string[] } = { message };
+  if (files && files.length > 0) {
+    body.files = files;
+  }
   const res = await fetch(`${BASE}/git/commit`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error("Failed to commit");
   return res.json();
@@ -207,6 +211,36 @@ export async function gitDiff(hash: string): Promise<DiffResponse> {
 export async function gitRestore(hash: string): Promise<CommitInfo> {
   const res = await fetch(`${BASE}/git/restore/${hash}`, { method: "POST" });
   if (!res.ok) throw new Error("Failed to restore");
+  return res.json();
+}
+
+export async function gitStatus(): Promise<{ files: string[] }> {
+  const res = await fetch(`${BASE}/git/status`);
+  if (!res.ok) throw new Error("Failed to get git status");
+  return res.json();
+}
+
+export async function gitFileLog(path: string, page = 1, perPage = 50): Promise<CommitLogResponse> {
+  const res = await fetch(`${BASE}/git/file-log/${path}?page=${page}&per_page=${perPage}`);
+  if (!res.ok) throw new Error("Failed to get file log");
+  return res.json();
+}
+
+export interface WorkingDiffResponse {
+  path: string;
+  diff_text: string;
+  has_changes: boolean;
+}
+
+export async function gitWorkingDiff(path: string): Promise<WorkingDiffResponse> {
+  const res = await fetch(`${BASE}/git/diff-working/${path}`);
+  if (!res.ok) throw new Error("Failed to get working diff");
+  return res.json();
+}
+
+export async function gitRestoreFile(hash: string, path: string): Promise<CommitInfo> {
+  const res = await fetch(`${BASE}/git/restore-file/${hash}/${path}`, { method: "POST" });
+  if (!res.ok) throw new Error("Failed to restore file");
   return res.json();
 }
 

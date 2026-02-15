@@ -15,7 +15,8 @@ VS Code、Obsidian、Typora 等の他エディタでもそのまま開ける互�
 - **画像管理** — クリップボードペーストで画像アップロード、未参照画像の自動 GC
 - **リンクオートコンプリート** — `[` 入力でページ検索、`![` で画像検索
 - **全文検索** — Ctrl+Shift+F でインクリメンタル検索（正規表現対応）
-- **Git 連携** — GUI からコミット・履歴閲覧・差分表示・リビジョン復元
+- **Git 連携** — GUI からコミット（全体 / ファイル選択）・履歴閲覧・差分表示・リビジョン復元
+- **ファイル単位の Git 操作** — ファイルごとのコミット履歴・差分表示・復元、ツリーに未コミットマーカー表示
 - **日報自動生成** — テンプレートから日報を作成、前日の「明日やること」を自動引用
 - **カレンダービュー** — 日報を月間カレンダーで一覧表示
 - **Kanban ボード** — `##` 見出しをカラム、`- [ ]` をカードとしてドラッグ＆ドロップ
@@ -118,10 +119,14 @@ tags: [tag1, tag2]
 | POST | `/api/assets/upload` | 画像アップロード |
 | GET | `/api/assets/index` | 画像一覧 |
 | GET | `/api/search` | 全文検索 |
-| POST | `/api/git/commit` | コミット (GC 込み) |
+| POST | `/api/git/commit` | コミット (全体 or ファイル指定) |
 | GET | `/api/git/log` | コミット履歴 |
 | GET | `/api/git/diff/:hash` | 差分表示 |
 | POST | `/api/git/restore/:hash` | リビジョン復元 |
+| GET | `/api/git/status` | 未コミットファイル一覧 |
+| GET | `/api/git/file-log/:path` | ファイル単体のコミット履歴 |
+| GET | `/api/git/diff-working/:path` | ファイルの未コミット差分 |
+| POST | `/api/git/restore-file/:hash/:path` | ファイル単体の復元 |
 | POST | `/api/gc` | 画像 GC 実行 |
 | GET | `/api/gc/preview` | GC プレビュー |
 | GET | `/api/links/check` | リンク切れ検出 |
