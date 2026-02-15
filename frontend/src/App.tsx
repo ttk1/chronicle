@@ -15,6 +15,7 @@ import AutocompletePopup, {
 } from "./components/AutocompletePopup";
 import {
   createPage,
+  deleteNote,
   getAssetIndex,
   getNote,
   getPageIndex,
@@ -222,6 +223,19 @@ function App() {
   const handleSaveRef = useRef(handleSave);
   handleSaveRef.current = handleSave;
 
+  const handleDelete = useCallback(async () => {
+    if (!currentPath) return;
+    if (!confirm(`Delete "${currentPath}"?`)) return;
+    try {
+      await deleteNote(currentPath);
+      setCurrentPath(null);
+      window.history.pushState(null, "", window.location.pathname);
+      await refreshAll();
+    } catch {
+      alert("Failed to delete");
+    }
+  }, [currentPath, refreshAll]);
+
   const handleTaskToggle = useCallback(
     (lineIndex: number) => {
       const lines = contentRef.current.split("\n");
@@ -328,6 +342,13 @@ function App() {
         </button>
         <button className="save-btn" onClick={handleSave}>
           Save
+        </button>
+        <button
+          className="toolbar-btn delete"
+          onClick={handleDelete}
+          title="Delete this page"
+        >
+          Delete
         </button>
       </div>
     </div>

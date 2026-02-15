@@ -68,7 +68,12 @@ def save_note(note_path: str, body: NoteUpdate):
 def delete_note(note_path: str):
     """Delete a note."""
     file_path = resolve_path(note_path)
-    if not file_path.exists():
+    if not file_path.exists() or not file_path.is_file():
         raise HTTPException(status_code=404, detail="Note not found")
     file_path.unlink()
+    # Clean up empty parent directories up to vault root
+    parent = file_path.parent
+    while parent != VAULT_DIR and parent.is_dir() and not any(parent.iterdir()):
+        parent.rmdir()
+        parent = parent.parent
     return {"path": note_path, "status": "deleted"}

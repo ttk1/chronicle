@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-from pathlib import Path
 
 import git as gitmodule
 from fastapi import APIRouter, HTTPException, Query
@@ -129,11 +128,8 @@ def git_commit(body: CommitRequest):
         repo.git.add("-A")
 
     # Check if there are staged changes
-    try:
-        staged = repo.index.diff("HEAD")
-    except gitmodule.BadName:
-        staged = repo.index.diff(gitmodule.NULL_TREE)
-    if not staged and not repo.index.diff(None):
+    staged_output = repo.git.diff("--cached", "--name-only")
+    if not staged_output.strip():
         raise HTTPException(status_code=200, detail="Nothing to commit")
 
     try:
