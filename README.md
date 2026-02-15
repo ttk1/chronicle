@@ -134,6 +134,15 @@ tags: [tag1, tag2]
 | GET | `/api/daily/calendar` | カレンダーデータ取得 |
 | GET | `/api/daily/months` | 日報がある月一覧 |
 
+## バックアップ
+
+`vault/` ディレクトリに全データと Git 履歴 (`vault/.git/`) が格納されています。
+バックアップは `vault/` をまるごとコピーすれば OK です。
+
+```bash
+cp -r ./vault ./vault-backup-$(date +%Y%m%d)
+```
+
 ## ライセンス
 
 MIT
