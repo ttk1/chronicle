@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import TreeView from "./components/TreeView";
 import TasksView from "./components/TasksView";
 import CreatePageDialog from "./components/CreatePageDialog";
@@ -21,6 +21,7 @@ import {
   getPageIndex,
   getTree,
   gitStatus,
+  gitWorkingDiff,
   saveNote,
   type AssetItem,
   type PageIndexItem,
@@ -51,6 +52,152 @@ function splitFrontmatter(content: string): {
   return { raw: match[0], body: content.slice(match[0].length), meta };
 }
 
+interface DiffResult {
+  changed: Set<number>;
+  /** Line numbers (1-indexed) after which deletions occurred. 0 = before first line. */
+  deletedAfter: Set<number>;
+}
+
+/** Parse unified diff text to extract changed/deleted line info in the new file. */
+function parseDiffLineNumbers(diffText: string): DiffResult {
+  const lines = diffText.split("\n");
+  const changed = new Set<number>();
+  const deletedAfter = new Set<number>();
+  let currentLine = 0;
+  let pendingDelete = false;
+  for (const line of lines) {
+    const hunkMatch = line.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
+    if (hunkMatch) {
+      currentLine = parseInt(hunkMatch[1], 10);
+      pendingDelete = false;
+      continue;
+    }
+    if (currentLine === 0) continue;
+    if (line.startsWith("+")) {
+      changed.add(currentLine);
+      pendingDelete = false;
+      currentLine++;
+    } else if (line.startsWith("-")) {
+      pendingDelete = true;
+    } else {
+      if (pendingDelete) {
+        // Deletion happened before this context line
+        deletedAfter.add(currentLine - 1);
+        pendingDelete = false;
+      }
+      currentLine++;
+    }
+  }
+  // Handle deletion at end of hunk
+  if (pendingDelete) {
+    deletedAfter.add(currentLine - 1);
+  }
+  return { changed, deletedAfter };
+}
+
+/**
+ * Compute changed/deleted line info using LCS diff.
+ * Returns 1-indexed line numbers in `current` that are added or modified,
+ * plus positions where deletions occurred.
+ */
+function computeChangedLines(saved: string, current: string): DiffResult {
+  if (saved === current) return { changed: new Set(), deletedAfter: new Set() };
+  const a = saved.split("\n");
+  const b = current.split("\n");
+  const n = a.length;
+  const m = b.length;
+
+  let lcsA: Set<number>;
+  let lcsB: Set<number>;
+
+  if (n * m > 4_000_000) {
+    // Greedy LCS for large files
+    const aMap = new Map<string, number[]>();
+    for (let i = 0; i < n; i++) {
+      const arr = aMap.get(a[i]);
+      if (arr) arr.push(i);
+      else aMap.set(a[i], [i]);
+    }
+    lcsA = new Set<number>();
+    lcsB = new Set<number>();
+    let lastA = -1;
+    for (let j = 0; j < m; j++) {
+      const positions = aMap.get(b[j]);
+      if (!positions) continue;
+      for (const pos of positions) {
+        if (pos > lastA) {
+          lcsA.add(pos);
+          lcsB.add(j);
+          lastA = pos;
+          break;
+        }
+      }
+    }
+  } else {
+    // Standard LCS DP
+    const dp: Uint16Array[] = [];
+    for (let i = 0; i <= n; i++) {
+      dp.push(new Uint16Array(m + 1));
+    }
+    for (let i = 1; i <= n; i++) {
+      for (let j = 1; j <= m; j++) {
+        if (a[i - 1] === b[j - 1]) {
+          dp[i][j] = dp[i - 1][j - 1] + 1;
+        } else {
+          dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+        }
+      }
+    }
+    lcsA = new Set<number>();
+    lcsB = new Set<number>();
+    let i = n, j = m;
+    while (i > 0 && j > 0) {
+      if (a[i - 1] === b[j - 1]) {
+        lcsA.add(i - 1);
+        lcsB.add(j - 1);
+        i--; j--;
+      } else if (dp[i - 1][j] > dp[i][j - 1]) {
+        i--;
+      } else {
+        j--;
+      }
+    }
+  }
+
+  // Lines in b not in LCS are changed/added
+  const changed = new Set<number>();
+  for (let j = 0; j < m; j++) {
+    if (!lcsB.has(j)) changed.add(j + 1);
+  }
+
+  // Find deletion positions: lines in a not in LCS → map to position in b
+  // Walk through a and b together using LCS as anchors
+  const deletedAfter = new Set<number>();
+  let bPos = 0; // current position in b (0-indexed)
+  let delRun = false;
+  for (let ai = 0; ai < n; ai++) {
+    if (lcsA.has(ai)) {
+      // This a-line is matched in LCS, advance bPos to its match
+      while (bPos < m && !lcsB.has(bPos)) bPos++;
+      if (delRun) {
+        // Deletions occurred before this matched line
+        deletedAfter.add(bPos); // bPos is 0-indexed, so this = "after line bPos" (before bPos+1)
+        delRun = false;
+      }
+      bPos++;
+    } else {
+      // This a-line was deleted
+      delRun = true;
+    }
+  }
+  if (delRun) {
+    // Deletions at the end of the file
+    deletedAfter.add(m);
+  }
+
+  return { changed, deletedAfter };
+}
+
 function App() {
   const [tree, setTree] = useState<TreeNode[]>([]);
   const [currentPath, setCurrentPath] = useState<string | null>(null);
@@ -75,6 +222,19 @@ function App() {
   const [frontmatterRaw, setFrontmatterRaw] = useState<string>("");
   const [editorMode, setEditorMode] = useState<EditorMode>("view");
   const [liveContent, setLiveContent] = useState<string>("");
+
+  // Line change tracking
+  const [savedContent, setSavedContent] = useState<string>("");
+  const [unsavedLines, setUnsavedLines] = useState<Set<number>>(new Set());
+  const [unsavedDeleted, setUnsavedDeleted] = useState<Set<number>>(new Set());
+  const [uncommittedLines, setUncommittedLines] = useState<Set<number>>(
+    new Set()
+  );
+  const [uncommittedDeleted, setUncommittedDeleted] = useState<Set<number>>(
+    new Set()
+  );
+  const [uncommittedDiff, setUncommittedDiff] = useState<string>("");
+  const unsavedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Theme
   const [theme, setTheme] = useState<"light" | "dark">(() => {
@@ -144,6 +304,42 @@ function App() {
     return () => document.removeEventListener("keydown", handleGlobalKeyDown);
   }, [toggleSidebarMode]);
 
+  const fetchUncommittedLines = useCallback(
+    async (path: string, frontmatter: string) => {
+      try {
+        const resp = await gitWorkingDiff(path);
+        if (resp.has_changes && resp.diff_text) {
+          const diff = parseDiffLineNumbers(resp.diff_text);
+          const fmLineCount = frontmatter
+            ? frontmatter.split("\n").length - 1
+            : 0;
+          const adjustedChanged = new Set<number>();
+          for (const ln of diff.changed) {
+            const adj = ln - fmLineCount;
+            if (adj > 0) adjustedChanged.add(adj);
+          }
+          const adjustedDeleted = new Set<number>();
+          for (const ln of diff.deletedAfter) {
+            const adj = ln - fmLineCount;
+            if (adj >= 0) adjustedDeleted.add(adj);
+          }
+          setUncommittedLines(adjustedChanged);
+          setUncommittedDeleted(adjustedDeleted);
+          setUncommittedDiff(resp.diff_text);
+        } else {
+          setUncommittedLines(new Set());
+          setUncommittedDeleted(new Set());
+          setUncommittedDiff("");
+        }
+      } catch {
+        setUncommittedLines(new Set());
+        setUncommittedDeleted(new Set());
+        setUncommittedDiff("");
+      }
+    },
+    []
+  );
+
   const openNote = useCallback(async (path: string) => {
     const note = await getNote(path);
     const { raw, body, meta } = splitFrontmatter(note.content);
@@ -151,6 +347,9 @@ function App() {
     setContent(body);
     setLiveContent(body);
     contentRef.current = body;
+    setSavedContent(body);
+    setUnsavedLines(new Set());
+    setUnsavedDeleted(new Set());
     setCurrentPath(path);
     setNoteType(typeof meta.type === "string" ? meta.type : "note");
     setEditorMode("view");
@@ -158,7 +357,8 @@ function App() {
     if (window.location.hash !== newHash) {
       window.history.pushState(null, "", newHash);
     }
-  }, []);
+    fetchUncommittedLines(path, raw);
+  }, [fetchUncommittedLines]);
 
   const navigateToLink = useCallback(
     (href: string) => {
@@ -194,10 +394,20 @@ function App() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, [openNote]);
 
-  const handleSourceChange = useCallback((markdown: string) => {
-    contentRef.current = markdown;
-    setLiveContent(markdown);
-  }, []);
+  const handleSourceChange = useCallback(
+    (markdown: string) => {
+      contentRef.current = markdown;
+      setLiveContent(markdown);
+      // Debounced unsaved line detection
+      if (unsavedTimerRef.current) clearTimeout(unsavedTimerRef.current);
+      unsavedTimerRef.current = setTimeout(() => {
+        const diff = computeChangedLines(savedContent, markdown);
+        setUnsavedLines(diff.changed);
+        setUnsavedDeleted(diff.deletedAfter);
+      }, 300);
+    },
+    [savedContent]
+  );
 
   const handleToggleEdit = useCallback(() => {
     if (editorMode === "view") {
@@ -217,11 +427,38 @@ function App() {
   const handleSave = useCallback(async () => {
     if (!currentPath) return;
     await saveNote(currentPath, frontmatterRaw + contentRef.current);
+    setSavedContent(contentRef.current);
+    setUnsavedLines(new Set());
+    setUnsavedDeleted(new Set());
     await refreshAll();
-  }, [currentPath, frontmatterRaw, refreshAll]);
+    fetchUncommittedLines(currentPath, frontmatterRaw);
+  }, [currentPath, frontmatterRaw, refreshAll, fetchUncommittedLines]);
 
   const handleSaveRef = useRef(handleSave);
   handleSaveRef.current = handleSave;
+
+  const lineStatuses = useMemo(() => {
+    const map = new Map<number, "unsaved" | "uncommitted">();
+    for (const ln of uncommittedLines) {
+      map.set(ln, "uncommitted");
+    }
+    // unsaved overrides uncommitted
+    for (const ln of unsavedLines) {
+      map.set(ln, "unsaved");
+    }
+    return map;
+  }, [unsavedLines, uncommittedLines]);
+
+  const deletedLines = useMemo(() => {
+    const map = new Map<number, "unsaved" | "uncommitted">();
+    for (const ln of uncommittedDeleted) {
+      map.set(ln, "uncommitted");
+    }
+    for (const ln of unsavedDeleted) {
+      map.set(ln, "unsaved");
+    }
+    return map;
+  }, [unsavedDeleted, uncommittedDeleted]);
 
   const handleDelete = useCallback(async () => {
     if (!currentPath) return;
@@ -432,6 +669,15 @@ function App() {
                 key={currentPath + ":edit"}
                 defaultValue={content}
                 currentPath={currentPath}
+                lineStatuses={lineStatuses}
+                deletedLines={deletedLines}
+                savedContent={savedContent}
+                uncommittedDiff={uncommittedDiff}
+                frontmatterLineCount={
+                  frontmatterRaw
+                    ? frontmatterRaw.split("\n").length - 1
+                    : 0
+                }
                 onChange={handleSourceChange}
                 onTriggerLinkAutocomplete={handleTriggerLinkAutocomplete}
                 onTriggerImageAutocomplete={handleTriggerImageAutocomplete}

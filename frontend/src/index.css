@@ -71,6 +71,11 @@ body,
   --color-diff-mod-bg: #ddf4ff;
   --color-diff-mod-text: #0969da;
 
+  /* Gutter indicators */
+  --color-gutter-unsaved: #e2b340;
+  --color-gutter-uncommitted: #2ea043;
+  --color-gutter-deleted: #d32f2f;
+
   /* Search highlight */
   --color-search-highlight-bg: #fff3b0;
   --color-search-highlight-text: #1a1a1a;
@@ -169,6 +174,11 @@ body,
   --color-diff-del-text: #f06060;
   --color-diff-mod-bg: #1a2a3a;
   --color-diff-mod-text: #64b5f6;
+
+  /* Gutter indicators */
+  --color-gutter-unsaved: #cca030;
+  --color-gutter-uncommitted: #3fb950;
+  --color-gutter-deleted: #f85149;
 
   /* Search highlight */
   --color-search-highlight-bg: #5a4a10;

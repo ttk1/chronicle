@@ -19,6 +19,111 @@
   box-sizing: border-box;
 }
 
+/* Gutter layer (leftmost, for change indicators) */
+.source-gutter-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+  padding-top: 16px;
+  box-sizing: border-box;
+}
+
+.gutter-line {
+  height: 1.6em;
+  font-size: 0.9rem;
+}
+
+.gutter-unsaved {
+  background: var(--color-gutter-unsaved);
+}
+
+.gutter-uncommitted {
+  background: var(--color-gutter-uncommitted);
+}
+
+/* Delete marker: small triangle indicating removed lines */
+.gutter-deleted {
+  height: 0;
+  width: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 6px solid var(--color-gutter-deleted);
+  position: relative;
+  margin-top: -5px;
+  margin-bottom: -5px;
+}
+
+/* Clickable gutter markers */
+.gutter-clickable {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* Widen click target for gutter markers */
+.gutter-line.gutter-clickable {
+  width: 12px;
+  margin-left: -4px;
+  padding-left: 4px;
+  background-clip: content-box;
+}
+
+/* Inline diff popup */
+.gutter-diff-popup {
+  position: fixed;
+  z-index: 190;
+  width: 500px;
+  max-width: 60vw;
+  max-height: 300px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 6px;
+  box-shadow: 0 4px 20px var(--color-shadow);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.gutter-diff-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 12px;
+  background: var(--color-bg-sidebar);
+  border-bottom: 1px solid var(--color-border-primary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.gutter-diff-popup-close {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.gutter-diff-popup-close:hover {
+  color: var(--color-text-primary);
+}
+
+.gutter-diff-popup-content {
+  overflow-y: auto;
+  overflow-x: auto;
+  padding: 4px 0;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
 /* Highlight layer (behind textarea) */
 .source-highlight-layer {
   position: absolute;
